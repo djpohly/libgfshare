@@ -60,7 +60,7 @@ gfshare_rand_func_t gfshare_fill_rand = _gfshare_fill_rand_using_random;
 /* ------------------------------------------------------[ Preparation ]---- */
 
 static gfshare_ctx *
-_gfshare_ctx_init_core( unsigned char *sharenrs,
+_gfshare_ctx_init_core( const unsigned char *sharenrs,
                         unsigned int sharecount,
                         unsigned char threshold,
                         unsigned int size )
@@ -100,7 +100,7 @@ _gfshare_ctx_init_core( unsigned char *sharenrs,
 
 /* Initialise a gfshare context for producing shares */
 gfshare_ctx *
-gfshare_ctx_init_enc( unsigned char* sharenrs,
+gfshare_ctx_init_enc( const unsigned char* sharenrs,
                       unsigned int sharecount,
                       unsigned char threshold,
                       unsigned int size )
@@ -122,7 +122,7 @@ gfshare_ctx_init_enc( unsigned char* sharenrs,
 
 /* Initialise a gfshare context for recombining shares */
 gfshare_ctx*
-gfshare_ctx_init_dec( unsigned char* sharenrs,
+gfshare_ctx_init_dec( const unsigned char* sharenrs,
                       unsigned int sharecount,
                       unsigned int size )
 {
@@ -151,7 +151,7 @@ gfshare_ctx_free( gfshare_ctx* ctx )
 /* Provide a secret to the encoder. (this re-scrambles the coefficients) */
 void 
 gfshare_ctx_enc_setsecret( gfshare_ctx* ctx,
-                           unsigned char* secret)
+                           const unsigned char* secret)
 {
   memcpy( ctx->buffer + ((ctx->threshold-1) * ctx->size),
           secret,
@@ -164,7 +164,7 @@ gfshare_ctx_enc_setsecret( gfshare_ctx* ctx,
  * 'sharenr' is the index into the 'sharenrs' array of the share you want.
  */
 void 
-gfshare_ctx_enc_getshare( gfshare_ctx* ctx,
+gfshare_ctx_enc_getshare( const gfshare_ctx* ctx,
                           unsigned char sharenr,
                           unsigned char* share)
 {
@@ -190,7 +190,7 @@ gfshare_ctx_enc_getshare( gfshare_ctx* ctx,
 /* Inform a recombination context of a change in share indexes */
 void 
 gfshare_ctx_dec_newshares( gfshare_ctx* ctx,
-                           unsigned char* sharenrs)
+                           const unsigned char* sharenrs)
 {
   memcpy( ctx->sharenrs, sharenrs, ctx->sharecount );
 }
@@ -201,7 +201,7 @@ gfshare_ctx_dec_newshares( gfshare_ctx* ctx,
 void 
 gfshare_ctx_dec_giveshare( gfshare_ctx* ctx,
                            unsigned char sharenr,
-                           unsigned char* share )
+                           const unsigned char* share )
 {
   memcpy( ctx->buffer + (sharenr * ctx->size), share, ctx->size );
 }
@@ -210,7 +210,7 @@ gfshare_ctx_dec_giveshare( gfshare_ctx* ctx,
  * secretbuf must be allocated and at least 'size' bytes long
  */
 void
-gfshare_ctx_dec_extract( gfshare_ctx* ctx,
+gfshare_ctx_dec_extract( const gfshare_ctx* ctx,
                          unsigned char* secretbuf )
 {
   unsigned int i, j;
