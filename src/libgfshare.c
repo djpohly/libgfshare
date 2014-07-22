@@ -126,12 +126,7 @@ gfshare_ctx_init_dec( const unsigned char* sharenrs,
                       unsigned int sharecount,
                       unsigned int size )
 {
-  gfshare_ctx *ctx = _gfshare_ctx_init_core( sharenrs, sharecount, sharecount, size );
-  
-  if( ctx != NULL )
-    ctx->threshold = 0;
-  
-  return ctx;
+  return _gfshare_ctx_init_core( sharenrs, sharecount, sharecount, size );
 }
 
 /* Free a share context's memory. */
