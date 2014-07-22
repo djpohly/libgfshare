@@ -40,7 +40,6 @@ struct _gfshare_ctx {
   unsigned int size;
   unsigned char* sharenrs;
   unsigned char* buffer;
-  unsigned int buffersize;
 };
 
 static void
@@ -84,8 +83,7 @@ _gfshare_ctx_init_core( const unsigned char *sharenrs,
   }
   
   memcpy( ctx->sharenrs, sharenrs, sharecount );
-  ctx->buffersize = threshold * size;
-  ctx->buffer = XMALLOC( ctx->buffersize );
+  ctx->buffer = XMALLOC( threshold * size );
   
   if( ctx->buffer == NULL ) {
     int saved_errno = errno;
@@ -133,7 +131,7 @@ gfshare_ctx_init_dec( const unsigned char* sharenrs,
 void 
 gfshare_ctx_free( gfshare_ctx* ctx )
 {
-  gfshare_fill_rand( ctx->buffer, ctx->buffersize );
+  gfshare_fill_rand( ctx->buffer, ctx->threshold * ctx->size );
   gfshare_fill_rand( ctx->sharenrs, ctx->sharecount );
   XFREE( ctx->sharenrs );
   XFREE( ctx->buffer );
