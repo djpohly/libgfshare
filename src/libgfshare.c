@@ -121,10 +121,10 @@ gfshare_ctx_init_enc( const unsigned char* sharenrs,
 /* Initialise a gfshare context for recombining shares */
 gfshare_ctx*
 gfshare_ctx_init_dec( const unsigned char* sharenrs,
-                      unsigned int sharecount,
+                      unsigned int threshold,
                       unsigned int size )
 {
-  return _gfshare_ctx_init_core( sharenrs, sharecount, sharecount, size );
+  return _gfshare_ctx_init_core( sharenrs, threshold, threshold, size );
 }
 
 /* Free a share context's memory. */
@@ -185,7 +185,7 @@ void
 gfshare_ctx_dec_newshares( gfshare_ctx* ctx,
                            const unsigned char* sharenrs)
 {
-  memcpy( ctx->sharenrs, sharenrs, ctx->sharecount );
+  memcpy( ctx->sharenrs, sharenrs, ctx->threshold );
 }
 
 /* Provide a share context with one of the shares.
@@ -212,13 +212,13 @@ gfshare_ctx_dec_extract( const gfshare_ctx* ctx,
   for( i = 0; i < ctx->size; ++i )
     secretbuf[i] = 0;
   
-  for( i = 0; i < ctx->sharecount; ++i ) {
+  for( i = 0; i < ctx->threshold; ++i ) {
     /* Compute L(i) as per Lagrange Interpolation */
     unsigned Li_top = 0, Li_bottom = 0;
     
     if( ctx->sharenrs[i] == 0 ) continue; /* this share is not provided. */
     
-    for( j = 0; j < ctx->sharecount; ++j ) {
+    for( j = 0; j < ctx->threshold; ++j ) {
       if( i == j ) continue;
       if( ctx->sharenrs[j] == 0 ) continue; /* skip empty share */
       Li_top += logs[ctx->sharenrs[j]];
