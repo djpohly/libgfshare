@@ -64,9 +64,9 @@ void gfshare_ctx_enc_setsecret(gfshare_ctx* /* ctx */,
  * 'share' must be preallocated and at least 'size' bytes long.
  * 'sharenr' is the index into the 'sharenrs' array of the share you want.
  */
-void gfshare_ctx_enc_getshare(const gfshare_ctx* /* ctx */,
-                              unsigned char /* sharenr */,
-                              unsigned char* /* share */);
+int gfshare_ctx_enc_getshare(const gfshare_ctx* /* ctx */,
+                             unsigned char /* sharenr */,
+                             unsigned char* /* share */);
 
 /* ----------------------------------------------------[ Recombination ]---- */
 
@@ -77,9 +77,9 @@ void gfshare_ctx_dec_newshares(gfshare_ctx* /* ctx */,
 /* Provide a share context with one of the shares.
  * The 'sharenr' is the index into the 'sharenrs' array
  */
-void gfshare_ctx_dec_giveshare(gfshare_ctx* /* ctx */,
-                               unsigned char /* sharenr */,
-                               const unsigned char* /* share */);
+int gfshare_ctx_dec_giveshare(gfshare_ctx* /* ctx */,
+                              unsigned char /* sharenr */,
+                              const unsigned char* /* share */);
 
 /* Extract the secret by interpolation of the shares.
  * secretbuf must be allocated and at least 'size' bytes long

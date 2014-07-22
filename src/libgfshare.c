@@ -65,6 +65,12 @@ _gfshare_ctx_init_core( const unsigned char *sharenrs,
                         unsigned int size )
 {
   gfshare_ctx *ctx;
+
+  /* Size must be nonzero, and 1 <= threshold <= sharecount */
+  if( size < 1 || threshold < 1 || threshold > sharecount ) {
+    errno = EINVAL;
+    return NULL;
+  }
   
   ctx = XMALLOC( sizeof(struct _gfshare_ctx) );
   if( ctx == NULL )
@@ -156,11 +162,15 @@ gfshare_ctx_enc_setsecret( gfshare_ctx* ctx,
  * 'share' must be preallocated and at least 'size' bytes long.
  * 'sharenr' is the index into the 'sharenrs' array of the share you want.
  */
-void 
+int
 gfshare_ctx_enc_getshare( const gfshare_ctx* ctx,
                           unsigned char sharenr,
                           unsigned char* share)
 {
+  if (sharenr >= ctx->sharecount) {
+    errno = EINVAL;
+    return 1;
+  }
   unsigned int pos, coefficient;
   unsigned int ilog = logs[ctx->sharenrs[sharenr]];
   unsigned char *coefficient_ptr = ctx->buffer;
@@ -176,6 +186,7 @@ gfshare_ctx_enc_getshare( const gfshare_ctx* ctx,
       *share_ptr++ = share_byte ^ *coefficient_ptr++;
     }
   }
+  return 0;
 }
 
 /* ----------------------------------------------------[ Recombination ]---- */
@@ -191,12 +202,17 @@ gfshare_ctx_dec_newshares( gfshare_ctx* ctx,
 /* Provide a share context with one of the shares.
  * The 'sharenr' is the index into the 'sharenrs' array
  */
-void 
+int
 gfshare_ctx_dec_giveshare( gfshare_ctx* ctx,
                            unsigned char sharenr,
                            const unsigned char* share )
 {
+  if( sharenr >= ctx->threshold ) {
+    errno = EINVAL;
+    return 1;
+  }
   memcpy( ctx->buffer + (sharenr * ctx->size), share, ctx->size );
+  return 0;
 }
 
 /* Extract the secret by interpolation of the shares.
