@@ -44,12 +44,12 @@ extern gfshare_rand_func_t gfshare_fill_rand;
 gfshare_ctx* gfshare_ctx_init_enc(const unsigned char* /* sharenrs */,
                                   unsigned int /* sharecount */,
                                   unsigned char /* threshold */,
-                                  unsigned int /* size */);
+                                  unsigned int /* maxsize */);
 
 /* Initialise a gfshare context for recombining shares */
 gfshare_ctx* gfshare_ctx_init_dec(const unsigned char* /* sharenrs */,
                                   unsigned int /* threshold */,
-                                  unsigned int /* size */);
+                                  unsigned int /* maxsize */);
 
 /* Free a share context's memory. */
 void gfshare_ctx_free(gfshare_ctx* /* ctx */);

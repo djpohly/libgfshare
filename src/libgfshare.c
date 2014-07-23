@@ -37,6 +37,7 @@
 struct _gfshare_ctx {
   unsigned int sharecount;
   unsigned int threshold;
+  unsigned int maxsize;
   unsigned int size;
   unsigned char* sharenrs;
   unsigned char* buffer;
@@ -62,12 +63,12 @@ static gfshare_ctx *
 _gfshare_ctx_init_core( const unsigned char *sharenrs,
                         unsigned int sharecount,
                         unsigned char threshold,
-                        unsigned int size )
+                        unsigned int maxsize )
 {
   gfshare_ctx *ctx;
 
   /* Size must be nonzero, and 1 <= threshold <= sharecount */
-  if( size < 1 || threshold < 1 || threshold > sharecount ) {
+  if( maxsize < 1 || threshold < 1 || threshold > sharecount ) {
     errno = EINVAL;
     return NULL;
   }
@@ -78,7 +79,8 @@ _gfshare_ctx_init_core( const unsigned char *sharenrs,
   
   ctx->sharecount = sharecount;
   ctx->threshold = threshold;
-  ctx->size = size;
+  ctx->maxsize = maxsize;
+  ctx->size = maxsize;
   ctx->sharenrs = XMALLOC( sharecount );
   
   if( ctx->sharenrs == NULL ) {
@@ -89,7 +91,7 @@ _gfshare_ctx_init_core( const unsigned char *sharenrs,
   }
   
   memcpy( ctx->sharenrs, sharenrs, sharecount );
-  ctx->buffer = XMALLOC( threshold * size );
+  ctx->buffer = XMALLOC( threshold * maxsize );
   
   if( ctx->buffer == NULL ) {
     int saved_errno = errno;
@@ -107,7 +109,7 @@ gfshare_ctx *
 gfshare_ctx_init_enc( const unsigned char* sharenrs,
                       unsigned int sharecount,
                       unsigned char threshold,
-                      unsigned int size )
+                      unsigned int maxsize )
 {
   unsigned int i;
 
@@ -121,23 +123,23 @@ gfshare_ctx_init_enc( const unsigned char* sharenrs,
     }
   }
 
-  return _gfshare_ctx_init_core( sharenrs, sharecount, threshold, size );
+  return _gfshare_ctx_init_core( sharenrs, sharecount, threshold, maxsize );
 }
 
 /* Initialise a gfshare context for recombining shares */
 gfshare_ctx*
 gfshare_ctx_init_dec( const unsigned char* sharenrs,
                       unsigned int threshold,
-                      unsigned int size )
+                      unsigned int maxsize )
 {
-  return _gfshare_ctx_init_core( sharenrs, threshold, threshold, size );
+  return _gfshare_ctx_init_core( sharenrs, threshold, threshold, maxsize );
 }
 
 /* Free a share context's memory. */
 void 
 gfshare_ctx_free( gfshare_ctx* ctx )
 {
-  gfshare_fill_rand( ctx->buffer, ctx->threshold * ctx->size );
+  gfshare_fill_rand( ctx->buffer, ctx->threshold * ctx->maxsize );
   gfshare_fill_rand( ctx->sharenrs, ctx->sharecount );
   XFREE( ctx->sharenrs );
   XFREE( ctx->buffer );
