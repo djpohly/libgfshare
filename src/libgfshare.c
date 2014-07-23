@@ -135,6 +135,18 @@ gfshare_ctx_init_dec( const unsigned char* sharenrs,
   return _gfshare_ctx_init_core( sharenrs, threshold, threshold, maxsize );
 }
 
+/* Set the current processing size */
+int
+gfshare_ctx_setsize( gfshare_ctx* ctx, unsigned int size )
+{
+  if( size < 1 || size >= ctx->maxsize ) {
+    errno = EINVAL;
+    return 1;
+  }
+  ctx->size = size;
+  return 0;
+}
+
 /* Free a share context's memory. */
 void 
 gfshare_ctx_free( gfshare_ctx* ctx )
@@ -255,4 +267,3 @@ gfshare_ctx_dec_extract( const gfshare_ctx* ctx,
     }
   }
 }
-

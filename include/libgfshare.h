@@ -51,6 +51,10 @@ gfshare_ctx* gfshare_ctx_init_dec(const unsigned char* /* sharenrs */,
                                   unsigned int /* threshold */,
                                   unsigned int /* maxsize */);
 
+/* Set the current processing size */
+int gfshare_ctx_setsize(gfshare_ctx* /* ctx */,
+                        unsigned int /* size */);
+
 /* Free a share context's memory. */
 void gfshare_ctx_free(gfshare_ctx* /* ctx */);
 
