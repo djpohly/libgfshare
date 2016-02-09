@@ -235,13 +235,19 @@ gfshare_ctx_dec_giveshare( gfshare_ctx* ctx,
 /* Extract the secret by interpolation of the shares.
  * secretbuf must be allocated and at least 'size' bytes long
  */
-void
+int
 gfshare_ctx_dec_extract( const gfshare_ctx* ctx,
-                         unsigned char* secretbuf )
+                         unsigned char* secretbuf,
+                         unsigned int integrity )
 {
   unsigned int i, j, n, jn;
   unsigned char *secret_ptr, *share_ptr;
 
+  if( integrity < ctx->threshold || integrity > ctx->sharecount ) {
+    errno = EINVAL;
+    return 1;
+  }
+  
   memset(secretbuf, 0, ctx->size);
   
   for( n = i = 0; n < ctx->threshold && i < ctx->sharecount; ++n, ++i ) {
@@ -274,4 +280,5 @@ gfshare_ctx_dec_extract( const gfshare_ctx* ctx,
       share_ptr++; secret_ptr++;
     }
   }
+  return 0;
 }

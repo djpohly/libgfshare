@@ -60,7 +60,7 @@ main( int argc, char **argv )
   /* Stage 3, attempt a recombination with shares 1 and 2 */
   sharenrs[2] = 0;
   gfshare_ctx_dec_newshares( G, sharenrs );
-  gfshare_ctx_dec_extract( G, recomb );
+  gfshare_ctx_dec_extract( G, recomb, 2 );
   for( i = 0; i < 512; ++i )
     if( secret[i] != recomb[i] ) 
       ok = 0;
@@ -68,7 +68,7 @@ main( int argc, char **argv )
   sharenrs[2] = '2';
   sharenrs[1] = 0;
   gfshare_ctx_dec_newshares( G, sharenrs );
-  gfshare_ctx_dec_extract( G, recomb );
+  gfshare_ctx_dec_extract( G, recomb, 2 );
   for( i = 0; i < 512; ++i )
     if( secret[i] != recomb[i] ) 
       ok = 0;
@@ -76,14 +76,14 @@ main( int argc, char **argv )
   sharenrs[0] = 0;
   sharenrs[1] = '1';
   gfshare_ctx_dec_newshares( G, sharenrs );
-  gfshare_ctx_dec_extract( G, recomb );
+  gfshare_ctx_dec_extract( G, recomb, 2 );
   for( i = 0; i < 512; ++i )
     if( secret[i] != recomb[i] ) 
       ok = 0;
   /* Stage 6, attempt a recombination with shares 1, 2 and 3 */
   sharenrs[0] = '0';
   gfshare_ctx_dec_newshares( G, sharenrs );
-  gfshare_ctx_dec_extract( G, recomb );
+  gfshare_ctx_dec_extract( G, recomb, 3 );
   for( i = 0; i < 512; ++i )
     if( secret[i] != recomb[i] ) 
       ok = 0;

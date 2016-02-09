@@ -147,7 +147,7 @@ do_gfcombine( char *outputfilename, char **inputfilenames, int filecount )
       }
       gfshare_ctx_dec_giveshare( G, i, buffer );
     }
-    gfshare_ctx_dec_extract( G, buffer );
+    gfshare_ctx_dec_extract( G, buffer, filecount );
     bytes_written = fwrite( buffer, 1, bytes_read, outfile );
     if( bytes_written != bytes_read ) {
       fprintf( stderr, "Mismatch during file write.\n");

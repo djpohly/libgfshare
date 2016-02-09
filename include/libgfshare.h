@@ -89,8 +89,9 @@ int gfshare_ctx_dec_giveshare(gfshare_ctx* /* ctx */,
 /* Extract the secret by interpolation of the shares.
  * secretbuf must be allocated and at least 'size' bytes long
  */
-void gfshare_ctx_dec_extract(const gfshare_ctx* /* ctx */,
-                             unsigned char* /* secretbuf */);
+int gfshare_ctx_dec_extract(const gfshare_ctx* /* ctx */,
+                             unsigned char* /* secretbuf */,
+                             unsigned int /* integrity*/);
 
 #endif /* LIBGFSHARE_H */
 
