@@ -166,10 +166,10 @@ void
 gfshare_ctx_enc_setsecret( gfshare_ctx* ctx,
                            const unsigned char* secret)
 {
-  memcpy( ctx->buffer + ((ctx->threshold-1) * ctx->size),
+  memcpy( ctx->buffer + ((ctx->threshold-1) * ctx->maxsize),
           secret,
           ctx->size );
-  gfshare_fill_rand( ctx->buffer, (ctx->threshold-1) * ctx->size );
+  gfshare_fill_rand( ctx->buffer, (ctx->threshold-1) * ctx->maxsize );
 }
 
 /* Extract a share from the context. 
@@ -193,6 +193,7 @@ gfshare_ctx_enc_getshare( const gfshare_ctx* ctx,
     share[pos] = *(coefficient_ptr++);
   for( coefficient = 1; coefficient < ctx->threshold; ++coefficient ) {
     share_ptr = share;
+    coefficient_ptr = ctx->buffer + coefficient * ctx->maxsize;
     for( pos = 0; pos < ctx->size; ++pos ) {
       unsigned char share_byte = *share_ptr;
       if( share_byte )
@@ -225,7 +226,7 @@ gfshare_ctx_dec_giveshare( gfshare_ctx* ctx,
     errno = EINVAL;
     return 1;
   }
-  memcpy( ctx->buffer + (sharenr * ctx->size), share, ctx->size );
+  memcpy( ctx->buffer + (sharenr * ctx->maxsize), share, ctx->size );
   return 0;
 }
 
@@ -259,7 +260,7 @@ gfshare_ctx_dec_extract( const gfshare_ctx* ctx,
     if( Li_bottom  > Li_top ) Li_top += 0xff;
     Li_top -= Li_bottom; /* Li_top is now log(L(i)) */
     
-    secret_ptr = secretbuf; share_ptr = ctx->buffer + (ctx->size * i);
+    secret_ptr = secretbuf; share_ptr = ctx->buffer + (ctx->maxsize * i);
     for( j = 0; j < ctx->size; ++j ) {
       if( *share_ptr )
         *secret_ptr ^= exps[Li_top + logs[*share_ptr]];
