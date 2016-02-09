@@ -91,7 +91,7 @@ _gfshare_ctx_init_core( const unsigned char *sharenrs,
   }
   
   memcpy( ctx->sharenrs, sharenrs, sharecount );
-  ctx->buffer = XMALLOC( threshold * maxsize );
+  ctx->buffer = XMALLOC( sharecount * maxsize );
   
   if( ctx->buffer == NULL ) {
     int saved_errno = errno;
@@ -151,7 +151,7 @@ gfshare_ctx_setsize( gfshare_ctx* ctx, unsigned int size )
 void 
 gfshare_ctx_free( gfshare_ctx* ctx )
 {
-  gfshare_fill_rand( ctx->buffer, ctx->threshold * ctx->maxsize );
+  gfshare_fill_rand( ctx->buffer, ctx->sharecount * ctx->maxsize );
   gfshare_fill_rand( ctx->sharenrs, ctx->sharecount );
   XFREE( ctx->sharenrs );
   XFREE( ctx->buffer );
