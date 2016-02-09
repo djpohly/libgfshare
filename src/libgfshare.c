@@ -260,12 +260,12 @@ gfshare_ctx_dec_extract( const gfshare_ctx* ctx,
         continue; /* skip empty share */
       }
       Li_top += logs[ctx->sharenrs[j]];
-      if( Li_top >= 0xff ) Li_top -= 0xff;
       Li_bottom += logs[(ctx->sharenrs[i]) ^ (ctx->sharenrs[j])];
-      if( Li_bottom >= 0xff ) Li_bottom -= 0xff;
     }
-    if( Li_bottom  > Li_top ) Li_top += 0xff;
-    Li_top -= Li_bottom; /* Li_top is now log(L(i)) */
+    Li_bottom %= 0xff;
+    Li_top += 0xff - Li_bottom;
+    Li_top %= 0xff;
+    /* Li_top is now log(L(i)) */
     
     secret_ptr = secretbuf; share_ptr = ctx->buffer + (ctx->maxsize * i);
     for( j = 0; j < ctx->size; ++j ) {
