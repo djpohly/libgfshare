@@ -48,6 +48,7 @@ gfshare_ctx* gfshare_ctx_init_enc(const unsigned char* /* sharenrs */,
 
 /* Initialise a gfshare context for recombining shares */
 gfshare_ctx* gfshare_ctx_init_dec(const unsigned char* /* sharenrs */,
+                                  unsigned int /* sharecount */,
                                   unsigned int /* threshold */,
                                   unsigned int /* maxsize */);
 

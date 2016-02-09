@@ -27,6 +27,7 @@
 #include "libgfshare.h"
 #include "libgfshare_tables.h"
 
+#include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -129,10 +130,11 @@ gfshare_ctx_init_enc( const unsigned char* sharenrs,
 /* Initialise a gfshare context for recombining shares */
 gfshare_ctx*
 gfshare_ctx_init_dec( const unsigned char* sharenrs,
+                      unsigned int sharecount,
                       unsigned int threshold,
                       unsigned int maxsize )
 {
-  return _gfshare_ctx_init_core( sharenrs, threshold, threshold, maxsize );
+  return _gfshare_ctx_init_core( sharenrs, sharecount, threshold, maxsize );
 }
 
 /* Set the current processing size */
@@ -211,7 +213,7 @@ void
 gfshare_ctx_dec_newshares( gfshare_ctx* ctx,
                            const unsigned char* sharenrs)
 {
-  memcpy( ctx->sharenrs, sharenrs, ctx->threshold );
+  memcpy( ctx->sharenrs, sharenrs, ctx->sharecount );
 }
 
 /* Provide a share context with one of the shares.
@@ -222,7 +224,7 @@ gfshare_ctx_dec_giveshare( gfshare_ctx* ctx,
                            unsigned char sharenr,
                            const unsigned char* share )
 {
-  if( sharenr >= ctx->threshold ) {
+  if( sharenr >= ctx->sharecount ) {
     errno = EINVAL;
     return 1;
   }
@@ -237,21 +239,27 @@ void
 gfshare_ctx_dec_extract( const gfshare_ctx* ctx,
                          unsigned char* secretbuf )
 {
-  unsigned int i, j;
+  unsigned int i, j, n, jn;
   unsigned char *secret_ptr, *share_ptr;
-  
+
   for( i = 0; i < ctx->size; ++i )
     secretbuf[i] = 0;
   
-  for( i = 0; i < ctx->threshold; ++i ) {
+  for( n = i = 0; n < ctx->threshold && i < ctx->sharecount; ++n, ++i ) {
     /* Compute L(i) as per Lagrange Interpolation */
     unsigned Li_top = 0, Li_bottom = 0;
     
-    if( ctx->sharenrs[i] == 0 ) continue; /* this share is not provided. */
+    if( ctx->sharenrs[i] == 0 ) {
+      n--;
+      continue; /* this share is not provided. */
+    }
     
-    for( j = 0; j < ctx->threshold; ++j ) {
+    for( jn = j = 0; jn < ctx->threshold && j < ctx->sharecount; ++jn, ++j ) {
       if( i == j ) continue;
-      if( ctx->sharenrs[j] == 0 ) continue; /* skip empty share */
+      if( ctx->sharenrs[j] == 0 ) {
+        jn--;
+        continue; /* skip empty share */
+      }
       Li_top += logs[ctx->sharenrs[j]];
       if( Li_top >= 0xff ) Li_top -= 0xff;
       Li_bottom += logs[(ctx->sharenrs[i]) ^ (ctx->sharenrs[j])];

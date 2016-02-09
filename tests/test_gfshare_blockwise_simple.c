@@ -53,7 +53,7 @@ main( int argc, char **argv )
   gfshare_ctx_enc_getshare( G, 2, share3 );
   gfshare_ctx_free( G );
   /* Prep the decode shape */
-  G = gfshare_ctx_init_dec( sharenrs, 3, 512 );
+  G = gfshare_ctx_init_dec( sharenrs, 3, 2, 512 );
   gfshare_ctx_dec_giveshare( G, 0, share1 );
   gfshare_ctx_dec_giveshare( G, 1, share2 );
   gfshare_ctx_dec_giveshare( G, 2, share3 );
