@@ -88,5 +88,11 @@ main( int argc, char **argv )
     if( secret[i] != recomb[i] ) 
       ok = 0;
   gfshare_ctx_free( G );
+  free(sharenrs);
+  free(recomb);
+  free(share3);
+  free(share2);
+  free(share1);
+  free(secret);
   return ok!=1;
 }
