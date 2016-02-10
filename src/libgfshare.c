@@ -240,31 +240,44 @@ gfshare_ctx_dec_extract( const gfshare_ctx* ctx,
                          unsigned char* secretbuf,
                          unsigned int integrity )
 {
-  unsigned int i, j, n, jn;
+  unsigned int i, j, ki, li;
   unsigned char *secret_ptr, *share_ptr;
 
   if( integrity < ctx->threshold || integrity > ctx->sharecount ) {
     errno = EINVAL;
     return 1;
   }
+
+  /* Find indices at which we hit threshold and integrity parameter, accounting
+   * for empty shares.  If not enough shares are provided, it is an error. */
+  for( i = ki = 0; i < ctx->threshold && ki < ctx->sharecount; ++ki )
+    if( ctx->sharenrs[ki] != 0 )
+      i++;
+  if( i < ctx->threshold ) {
+    errno = EINVAL;
+    return 1;
+  }
+
+  /* At this point, i == ctx->threshold */
+  for( li = ki; i < integrity && li < ctx->sharecount; ++li )
+    if( ctx->sharenrs[li] != 0 )
+      i++;
+  if( i < integrity ) {
+    errno = EINVAL;
+    return 1;
+  }
   
   memset(secretbuf, 0, ctx->size);
   
-  for( n = i = 0; n < ctx->threshold && i < ctx->sharecount; ++n, ++i ) {
+  for( i = 0; i < ki; ++i ) {
     /* Compute L(i) as per Lagrange Interpolation */
     unsigned Li_top = 0, Li_bottom = 0;
     
-    if( ctx->sharenrs[i] == 0 ) {
-      n--;
-      continue; /* this share is not provided. */
-    }
+    if( ctx->sharenrs[i] == 0 ) continue; /* this share is not provided. */
     
-    for( jn = j = 0; jn < ctx->threshold && j < ctx->sharecount; ++jn, ++j ) {
+    for( j = 0; j < ki; ++j ) {
       if( i == j ) continue;
-      if( ctx->sharenrs[j] == 0 ) {
-        jn--;
-        continue; /* skip empty share */
-      }
+      if( ctx->sharenrs[j] == 0 ) continue; /* skip empty share */
       Li_top += logs[ctx->sharenrs[j]];
       Li_bottom += logs[(ctx->sharenrs[i]) ^ (ctx->sharenrs[j])];
     }
