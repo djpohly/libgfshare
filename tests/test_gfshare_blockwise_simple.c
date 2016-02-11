@@ -55,12 +55,11 @@ main( int argc, char **argv )
   gfshare_ctx_free( G );
   /* Prep the decode shape */
   G = gfshare_ctx_init_dec( sharenrs, 3, 2, SECRET_LEN );
-  gfshare_ctx_dec_giveshare( G, 0, share1 );
-  gfshare_ctx_dec_giveshare( G, 1, share2 );
-  gfshare_ctx_dec_giveshare( G, 2, share3 );
   /* Stage 3, attempt a recombination with shares 1 and 2 */
   sharenrs[2] = 0;
   gfshare_ctx_dec_newshares( G, sharenrs );
+  gfshare_ctx_dec_giveshare( G, 0, share1 );
+  gfshare_ctx_dec_giveshare( G, 1, share2 );
   gfshare_ctx_dec_extract( G, recomb, 2 );
   if( memcmp(secret, recomb, SECRET_LEN) )
     ok = 0;
@@ -68,6 +67,8 @@ main( int argc, char **argv )
   sharenrs[2] = '2';
   sharenrs[1] = 0;
   gfshare_ctx_dec_newshares( G, sharenrs );
+  gfshare_ctx_dec_giveshare( G, 0, share1 );
+  gfshare_ctx_dec_giveshare( G, 2, share3 );
   gfshare_ctx_dec_extract( G, recomb, 2 );
   if( memcmp(secret, recomb, SECRET_LEN) )
     ok = 0;
@@ -75,12 +76,17 @@ main( int argc, char **argv )
   sharenrs[0] = 0;
   sharenrs[1] = '1';
   gfshare_ctx_dec_newshares( G, sharenrs );
+  gfshare_ctx_dec_giveshare( G, 1, share2 );
+  gfshare_ctx_dec_giveshare( G, 2, share3 );
   gfshare_ctx_dec_extract( G, recomb, 2 );
   if( memcmp(secret, recomb, SECRET_LEN) )
     ok = 0;
   /* Stage 6, attempt a recombination with shares 1, 2 and 3 */
   sharenrs[0] = '0';
   gfshare_ctx_dec_newshares( G, sharenrs );
+  gfshare_ctx_dec_giveshare( G, 0, share1 );
+  gfshare_ctx_dec_giveshare( G, 1, share2 );
+  gfshare_ctx_dec_giveshare( G, 2, share3 );
   gfshare_ctx_dec_extract( G, recomb, 3 );
   if( memcmp(secret, recomb, SECRET_LEN) )
     ok = 0;
