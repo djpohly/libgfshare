@@ -240,7 +240,7 @@ gfshare_ctx_dec_extract( const gfshare_ctx* ctx,
                          unsigned char* secretbuf,
                          unsigned int integrity )
 {
-  unsigned int i, j, ki, li;
+  unsigned int i, j, k, ki, li;
   unsigned char *secret_ptr, *share_ptr;
 
   if( integrity < ctx->threshold || integrity > ctx->sharecount ) {
@@ -272,26 +272,40 @@ gfshare_ctx_dec_extract( const gfshare_ctx* ctx,
   for( i = 0; i < ki; ++i ) {
     /* Compute L(i) as per Lagrange Interpolation */
     unsigned Li_top = 0, Li_bottom = 0;
+    unsigned tops[ctx->sharecount];
+    for( j = ki; j < li; ++j )
+      tops[j] = 0;
     
     if( ctx->sharenrs[i] == 0 ) continue; /* this share is not provided. */
     
     for( j = 0; j < ki; ++j ) {
       if( i == j ) continue;
       if( ctx->sharenrs[j] == 0 ) continue; /* skip empty share */
-      Li_top += logs[ctx->sharenrs[j]];
+      Li_top += logs[0 ^ ctx->sharenrs[j]];
+      for( k = ki; k < li; ++k )
+        tops[k] += logs[ctx->sharenrs[k] ^ ctx->sharenrs[j]];
       Li_bottom += logs[(ctx->sharenrs[i]) ^ (ctx->sharenrs[j])];
     }
     Li_bottom %= 0xff;
     Li_top += 0xff - Li_bottom;
     Li_top %= 0xff;
     /* Li_top is now log(L(i)) */
-    
-    secret_ptr = secretbuf; share_ptr = ctx->buffer + (ctx->maxsize * i);
-    for( j = 0; j < ctx->size; ++j ) {
-      if( *share_ptr )
-        *secret_ptr ^= exps[Li_top + logs[*share_ptr]];
-      share_ptr++; secret_ptr++;
+    for( j = ki; j < li; ++j ) {
+      tops[k] += 0xff - Li_bottom;
+      tops[k] %= 0xff;
     }
+
+    share_ptr = ctx->buffer + (ctx->maxsize * i);
+    for( j = 0; j < ctx->size; ++j )
+      if( share_ptr[j] ) {
+        secretbuf[j] ^= exps[Li_top + logs[share_ptr[j]]];
+        for( k = ki; k < li; ++k )
+          ctx->buffer[ctx->maxsize * k + j] ^= exps[tops[k] + logs[share_ptr[j]]];
+      }
   }
+  for( i = ki; i < li; ++i )
+    for( j = 0; j < ctx->size; ++j )
+      if( ctx->buffer[ctx->maxsize * i + j] )
+        return 1;
   return 0;
 }
