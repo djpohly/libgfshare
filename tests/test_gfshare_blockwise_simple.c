@@ -29,31 +29,32 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define SECRET_LEN 512
 
 int
 main( int argc, char **argv )
 {
   int ok = 1, i;
-  unsigned char* secret = malloc(512);
-  unsigned char* share1 = malloc(512);
-  unsigned char* share2 = malloc(512);
-  unsigned char* share3 = malloc(512);
-  unsigned char* recomb = malloc(512);
+  unsigned char* secret = malloc(SECRET_LEN);
+  unsigned char* share1 = malloc(SECRET_LEN);
+  unsigned char* share2 = malloc(SECRET_LEN);
+  unsigned char* share3 = malloc(SECRET_LEN);
+  unsigned char* recomb = malloc(SECRET_LEN);
   unsigned char* sharenrs = (unsigned char*)strdup("012");
   gfshare_ctx *G;
   
   /* Stage 1, make a secret */
-  for( i = 0; i < 512; ++i )
+  for( i = 0; i < SECRET_LEN; ++i )
     secret[i] = (random() & 0xff00) >> 8;
   /* Stage 2, split it three ways with a threshold of 2 */
-  G = gfshare_ctx_init_enc( sharenrs, 3, 2, 512 );
+  G = gfshare_ctx_init_enc( sharenrs, 3, 2, SECRET_LEN );
   gfshare_ctx_enc_setsecret( G, secret );
   gfshare_ctx_enc_getshare( G, 0, share1 );
   gfshare_ctx_enc_getshare( G, 1, share2 );
   gfshare_ctx_enc_getshare( G, 2, share3 );
   gfshare_ctx_free( G );
   /* Prep the decode shape */
-  G = gfshare_ctx_init_dec( sharenrs, 3, 2, 512 );
+  G = gfshare_ctx_init_dec( sharenrs, 3, 2, SECRET_LEN );
   gfshare_ctx_dec_giveshare( G, 0, share1 );
   gfshare_ctx_dec_giveshare( G, 1, share2 );
   gfshare_ctx_dec_giveshare( G, 2, share3 );
@@ -61,7 +62,7 @@ main( int argc, char **argv )
   sharenrs[2] = 0;
   gfshare_ctx_dec_newshares( G, sharenrs );
   gfshare_ctx_dec_extract( G, recomb, 2 );
-  for( i = 0; i < 512; ++i )
+  for( i = 0; i < SECRET_LEN; ++i )
     if( secret[i] != recomb[i] ) 
       ok = 0;
   /* Stage 4, attempt a recombination with shares 1 and 3 */
@@ -69,7 +70,7 @@ main( int argc, char **argv )
   sharenrs[1] = 0;
   gfshare_ctx_dec_newshares( G, sharenrs );
   gfshare_ctx_dec_extract( G, recomb, 2 );
-  for( i = 0; i < 512; ++i )
+  for( i = 0; i < SECRET_LEN; ++i )
     if( secret[i] != recomb[i] ) 
       ok = 0;
   /* Stage 5, attempt a recombination with shares 2 and 3 */
@@ -77,14 +78,14 @@ main( int argc, char **argv )
   sharenrs[1] = '1';
   gfshare_ctx_dec_newshares( G, sharenrs );
   gfshare_ctx_dec_extract( G, recomb, 2 );
-  for( i = 0; i < 512; ++i )
+  for( i = 0; i < SECRET_LEN; ++i )
     if( secret[i] != recomb[i] ) 
       ok = 0;
   /* Stage 6, attempt a recombination with shares 1, 2 and 3 */
   sharenrs[0] = '0';
   gfshare_ctx_dec_newshares( G, sharenrs );
   gfshare_ctx_dec_extract( G, recomb, 3 );
-  for( i = 0; i < 512; ++i )
+  for( i = 0; i < SECRET_LEN; ++i )
     if( secret[i] != recomb[i] ) 
       ok = 0;
   gfshare_ctx_free( G );
