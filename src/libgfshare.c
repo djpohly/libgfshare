@@ -291,8 +291,8 @@ gfshare_ctx_dec_extract( const gfshare_ctx* ctx,
     Li_top %= 0xff;
     /* Li_top is now log(L(i)) */
     for( j = ki; j < li; ++j ) {
-      tops[k] += 0xff - Li_bottom;
-      tops[k] %= 0xff;
+      tops[j] += 0xff - Li_bottom;
+      tops[j] %= 0xff;
     }
 
     share_ptr = ctx->buffer + (ctx->maxsize * i);
