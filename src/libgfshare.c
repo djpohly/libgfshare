@@ -206,6 +206,34 @@ gfshare_ctx_enc_getshare( const gfshare_ctx* ctx,
   return 0;
 }
 
+int gfshare_ctx_enc_sharep(gfshare_ctx* ctx,
+                           unsigned int size,
+                           const unsigned char secret[static size],
+                           unsigned int nshares,
+                           unsigned char* shareps[static nshares])
+{
+  unsigned int sharenr;
+  gfshare_ctx_setsize(ctx, size);
+  gfshare_ctx_enc_setsecret(ctx, secret);
+  for( sharenr = 0; sharenr < nshares; ++sharenr )
+    if (gfshare_ctx_enc_getshare(ctx, sharenr, shareps[sharenr]))
+      return 1;
+  return 0;
+}
+
+int gfshare_ctx_enc_share(gfshare_ctx* ctx,
+                          unsigned int size,
+                          const unsigned char secret[static size],
+                          unsigned int nshares,
+                          unsigned char shares[static nshares])
+{
+  unsigned char* shareps[nshares];
+  unsigned int sharenr;
+  for( sharenr = 0; sharenr < nshares; ++sharenr )
+    shareps[sharenr] = &shares[sharenr * size];
+  return gfshare_ctx_enc_sharep(ctx, size, secret, nshares, shareps);
+}
+
 /* ----------------------------------------------------[ Recombination ]---- */
 
 /* Inform a recombination context of a change in share indexes */

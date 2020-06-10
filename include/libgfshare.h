@@ -73,6 +73,18 @@ int gfshare_ctx_enc_getshare(const gfshare_ctx* /* ctx */,
                              unsigned char /* sharenr */,
                              unsigned char* /* share */);
 
+int gfshare_ctx_enc_sharep(gfshare_ctx* /* ctx */,
+                           unsigned int /* size */,
+                           const unsigned char* /* secret */,
+                           unsigned int /* nshares */,
+                           unsigned char** /* shareps */);
+
+int gfshare_ctx_enc_share(gfshare_ctx* /* ctx */,
+                          unsigned int /* size */,
+                          const unsigned char* /* secret */,
+                          unsigned int /* nshares */,
+                          unsigned char* /* shares */);
+
 /* ----------------------------------------------------[ Recombination ]---- */
 
 /* Inform a recombination context of a change in share indexes */
