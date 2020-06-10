@@ -48,19 +48,19 @@ main( int argc, char **argv )
     secret[i] = (random() & 0xff00) >> 8;
   /* Stage 2, split it three ways with a threshold of 2 */
   G = gfshare_ctx_init_enc( sharenrs, 3, 2, SECRET_LEN );
-  gfshare_ctx_enc_setsecret( G, secret );
-  gfshare_ctx_enc_getshare( G, 0, share1 );
-  gfshare_ctx_enc_getshare( G, 1, share2 );
-  gfshare_ctx_enc_getshare( G, 2, share3 );
+  gfshare_ctx_enc_setsecret( G, SECRET_LEN, secret );
+  gfshare_ctx_enc_getshare( G, 0, SECRET_LEN, share1 );
+  gfshare_ctx_enc_getshare( G, 1, SECRET_LEN, share2 );
+  gfshare_ctx_enc_getshare( G, 2, SECRET_LEN, share3 );
   gfshare_ctx_free( G );
   /* Prep the decode shape */
   G = gfshare_ctx_init_dec( sharenrs, 3, 2, SECRET_LEN );
   /* Stage 3, attempt a recombination with shares 1 and 2 */
   sharenrs[2] = 0;
   gfshare_ctx_dec_newshares( G, sharenrs );
-  gfshare_ctx_dec_giveshare( G, 0, share1 );
-  gfshare_ctx_dec_giveshare( G, 1, share2 );
-  if( gfshare_ctx_dec_extract( G, recomb, 2 ) )
+  gfshare_ctx_dec_giveshare( G, 0, SECRET_LEN, share1 );
+  gfshare_ctx_dec_giveshare( G, 1, SECRET_LEN, share2 );
+  if( gfshare_ctx_dec_extract( G, SECRET_LEN, recomb, 2 ) )
     ok = 0;
   if( memcmp(secret, recomb, SECRET_LEN) )
     ok = 0;
@@ -68,9 +68,9 @@ main( int argc, char **argv )
   sharenrs[2] = '2';
   sharenrs[1] = 0;
   gfshare_ctx_dec_newshares( G, sharenrs );
-  gfshare_ctx_dec_giveshare( G, 0, share1 );
-  gfshare_ctx_dec_giveshare( G, 2, share3 );
-  if( gfshare_ctx_dec_extract( G, recomb, 2 ) )
+  gfshare_ctx_dec_giveshare( G, 0, SECRET_LEN, share1 );
+  gfshare_ctx_dec_giveshare( G, 2, SECRET_LEN, share3 );
+  if( gfshare_ctx_dec_extract( G, SECRET_LEN, recomb, 2 ) )
     ok = 0;
   if( memcmp(secret, recomb, SECRET_LEN) )
     ok = 0;
@@ -78,19 +78,19 @@ main( int argc, char **argv )
   sharenrs[0] = 0;
   sharenrs[1] = '1';
   gfshare_ctx_dec_newshares( G, sharenrs );
-  gfshare_ctx_dec_giveshare( G, 1, share2 );
-  gfshare_ctx_dec_giveshare( G, 2, share3 );
-  if( gfshare_ctx_dec_extract( G, recomb, 2 ) )
+  gfshare_ctx_dec_giveshare( G, 1, SECRET_LEN, share2 );
+  gfshare_ctx_dec_giveshare( G, 2, SECRET_LEN, share3 );
+  if( gfshare_ctx_dec_extract( G, SECRET_LEN, recomb, 2 ) )
     ok = 0;
   if( memcmp(secret, recomb, SECRET_LEN) )
     ok = 0;
   /* Stage 6, attempt a recombination with shares 1, 2 and 3 */
   sharenrs[0] = '0';
   gfshare_ctx_dec_newshares( G, sharenrs );
-  gfshare_ctx_dec_giveshare( G, 0, share1 );
-  gfshare_ctx_dec_giveshare( G, 1, share2 );
-  gfshare_ctx_dec_giveshare( G, 2, share3 );
-  if( gfshare_ctx_dec_extract( G, recomb, 3 ) )
+  gfshare_ctx_dec_giveshare( G, 0, SECRET_LEN, share1 );
+  gfshare_ctx_dec_giveshare( G, 1, SECRET_LEN, share2 );
+  gfshare_ctx_dec_giveshare( G, 2, SECRET_LEN, share3 );
+  if( gfshare_ctx_dec_extract( G, SECRET_LEN, recomb, 3 ) )
     ok = 0;
   if( memcmp(secret, recomb, SECRET_LEN) )
     ok = 0;
@@ -98,10 +98,10 @@ main( int argc, char **argv )
   sharenrs[0] = '2';
   sharenrs[2] = '0';
   gfshare_ctx_dec_newshares( G, sharenrs );
-  gfshare_ctx_dec_giveshare( G, 0, share3 );
-  gfshare_ctx_dec_giveshare( G, 1, share2 );
-  gfshare_ctx_dec_giveshare( G, 2, share1 );
-  if( gfshare_ctx_dec_extract( G, recomb, 3 ) )
+  gfshare_ctx_dec_giveshare( G, 0, SECRET_LEN, share3 );
+  gfshare_ctx_dec_giveshare( G, 1, SECRET_LEN, share2 );
+  gfshare_ctx_dec_giveshare( G, 2, SECRET_LEN, share1 );
+  if( gfshare_ctx_dec_extract( G, SECRET_LEN, recomb, 3 ) )
     ok = 0;
   if( memcmp(secret, recomb, SECRET_LEN) )
     ok = 0;
@@ -110,10 +110,10 @@ main( int argc, char **argv )
   sharenrs[2] = '2';
   share2[3]++;
   gfshare_ctx_dec_newshares( G, sharenrs );
-  gfshare_ctx_dec_giveshare( G, 0, share1 );
-  gfshare_ctx_dec_giveshare( G, 1, share2 );
-  gfshare_ctx_dec_giveshare( G, 2, share3 );
-  if( !gfshare_ctx_dec_extract( G, recomb, 3 ) )
+  gfshare_ctx_dec_giveshare( G, 0, SECRET_LEN, share1 );
+  gfshare_ctx_dec_giveshare( G, 1, SECRET_LEN, share2 );
+  gfshare_ctx_dec_giveshare( G, 2, SECRET_LEN, share3 );
+  if( !gfshare_ctx_dec_extract( G, SECRET_LEN, recomb, 3 ) )
     ok = 0;
   gfshare_ctx_free( G );
   free(sharenrs);

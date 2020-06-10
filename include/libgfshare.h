@@ -52,10 +52,6 @@ gfshare_ctx* gfshare_ctx_init_dec(const unsigned char* /* sharenrs */,
                                   unsigned int /* threshold */,
                                   unsigned int /* maxsize */);
 
-/* Set the current processing size */
-int gfshare_ctx_setsize(gfshare_ctx* /* ctx */,
-                        unsigned int /* size */);
-
 /* Free a share context's memory. */
 void gfshare_ctx_free(gfshare_ctx* /* ctx */);
 
@@ -63,6 +59,7 @@ void gfshare_ctx_free(gfshare_ctx* /* ctx */);
 
 /* Provide a secret to the encoder. (this re-scrambles the coefficients) */
 void gfshare_ctx_enc_setsecret(gfshare_ctx* /* ctx */,
+                               unsigned int /* size */,
                                const unsigned char* /* secret */);
 
 /* Extract a share from the context. 
@@ -71,6 +68,7 @@ void gfshare_ctx_enc_setsecret(gfshare_ctx* /* ctx */,
  */
 int gfshare_ctx_enc_getshare(const gfshare_ctx* /* ctx */,
                              unsigned char /* sharenr */,
+                             unsigned int /* size */,
                              unsigned char* /* share */);
 
 /* ----------------------------------------------------[ Recombination ]---- */
@@ -84,14 +82,16 @@ void gfshare_ctx_dec_newshares(gfshare_ctx* /* ctx */,
  */
 int gfshare_ctx_dec_giveshare(gfshare_ctx* /* ctx */,
                               unsigned char /* sharenr */,
+                              unsigned int /* size */,
                               const unsigned char* /* share */);
 
 /* Extract the secret by interpolation of the shares.
  * secretbuf must be allocated and at least 'size' bytes long
  */
 int gfshare_ctx_dec_extract(const gfshare_ctx* /* ctx */,
-                             unsigned char* /* secretbuf */,
-                             unsigned int /* integrity*/);
+                            unsigned int /* size */,
+                            unsigned char* /* secretbuf */,
+                            unsigned int /* integrity */);
 
 #endif /* LIBGFSHARE_H */
 

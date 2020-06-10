@@ -39,7 +39,6 @@ struct _gfshare_ctx {
   unsigned int sharecount;
   unsigned int threshold;
   unsigned int maxsize;
-  unsigned int size;
   unsigned char* sharenrs;
   unsigned char* buffer;
 };
@@ -81,7 +80,6 @@ _gfshare_ctx_init_core( const unsigned char *sharenrs,
   ctx->sharecount = sharecount;
   ctx->threshold = threshold;
   ctx->maxsize = maxsize;
-  ctx->size = maxsize;
   ctx->sharenrs = XMALLOC( sharecount );
   
   if( ctx->sharenrs == NULL ) {
@@ -137,18 +135,6 @@ gfshare_ctx_init_dec( const unsigned char* sharenrs,
   return _gfshare_ctx_init_core( sharenrs, sharecount, threshold, maxsize );
 }
 
-/* Set the current processing size */
-int
-gfshare_ctx_setsize( gfshare_ctx* ctx, unsigned int size )
-{
-  if( size < 1 || size >= ctx->maxsize ) {
-    errno = EINVAL;
-    return 1;
-  }
-  ctx->size = size;
-  return 0;
-}
-
 /* Free a share context's memory. */
 void 
 gfshare_ctx_free( gfshare_ctx* ctx )
@@ -166,11 +152,12 @@ gfshare_ctx_free( gfshare_ctx* ctx )
 /* Provide a secret to the encoder. (this re-scrambles the coefficients) */
 void 
 gfshare_ctx_enc_setsecret( gfshare_ctx* ctx,
-                           const unsigned char* secret)
+                           unsigned int size,
+                           const unsigned char secret[static size])
 {
   memcpy( ctx->buffer + ((ctx->threshold-1) * ctx->maxsize),
           secret,
-          ctx->size );
+          size );
   gfshare_fill_rand( ctx->buffer, (ctx->threshold-1) * ctx->maxsize );
 }
 
@@ -181,7 +168,8 @@ gfshare_ctx_enc_setsecret( gfshare_ctx* ctx,
 int
 gfshare_ctx_enc_getshare( const gfshare_ctx* ctx,
                           unsigned char sharenr,
-                          unsigned char* share)
+                          unsigned int size,
+                          unsigned char share[static size])
 {
   if (sharenr >= ctx->sharecount) {
     errno = EINVAL;
@@ -191,12 +179,12 @@ gfshare_ctx_enc_getshare( const gfshare_ctx* ctx,
   unsigned int ilog = logs[ctx->sharenrs[sharenr]];
   unsigned char *coefficient_ptr = ctx->buffer;
   unsigned char *share_ptr;
-  for( pos = 0; pos < ctx->size; ++pos )
+  for( pos = 0; pos < size; ++pos )
     share[pos] = *(coefficient_ptr++);
   for( coefficient = 1; coefficient < ctx->threshold; ++coefficient ) {
     share_ptr = share;
     coefficient_ptr = ctx->buffer + coefficient * ctx->maxsize;
-    for( pos = 0; pos < ctx->size; ++pos ) {
+    for( pos = 0; pos < size; ++pos ) {
       unsigned char share_byte = *share_ptr;
       if( share_byte )
         share_byte = exps[ilog + logs[share_byte]];
@@ -222,13 +210,14 @@ gfshare_ctx_dec_newshares( gfshare_ctx* ctx,
 int
 gfshare_ctx_dec_giveshare( gfshare_ctx* ctx,
                            unsigned char sharenr,
-                           const unsigned char* share )
+                           unsigned int size,
+                           const unsigned char share[static size] )
 {
   if( sharenr >= ctx->sharecount ) {
     errno = EINVAL;
     return 1;
   }
-  memcpy( ctx->buffer + (sharenr * ctx->maxsize), share, ctx->size );
+  memcpy( ctx->buffer + (sharenr * ctx->maxsize), share, size );
   return 0;
 }
 
@@ -237,7 +226,8 @@ gfshare_ctx_dec_giveshare( gfshare_ctx* ctx,
  */
 int
 gfshare_ctx_dec_extract( const gfshare_ctx* ctx,
-                         unsigned char* secretbuf,
+                         unsigned int size,
+                         unsigned char secretbuf[static size],
                          unsigned int integrity )
 {
   unsigned int i, j, k, ki, li;
@@ -267,7 +257,7 @@ gfshare_ctx_dec_extract( const gfshare_ctx* ctx,
     return 1;
   }
   
-  memset(secretbuf, 0, ctx->size);
+  memset(secretbuf, 0, size);
   
   for( i = 0; i < ki; ++i ) {
     /* Compute L(i) as per Lagrange Interpolation */
@@ -296,7 +286,7 @@ gfshare_ctx_dec_extract( const gfshare_ctx* ctx,
     }
 
     share_ptr = ctx->buffer + (ctx->maxsize * i);
-    for( j = 0; j < ctx->size; ++j )
+    for( j = 0; j < size; ++j )
       if( share_ptr[j] ) {
         secretbuf[j] ^= exps[Li_top + logs[share_ptr[j]]];
         for( k = ki; k < li; ++k )
@@ -304,7 +294,7 @@ gfshare_ctx_dec_extract( const gfshare_ctx* ctx,
       }
   }
   for( i = ki; i < li; ++i )
-    for( j = 0; j < ctx->size; ++j )
+    for( j = 0; j < size; ++j )
       if( ctx->buffer[ctx->maxsize * i + j] )
         return 1;
   return 0;
