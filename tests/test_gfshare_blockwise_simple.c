@@ -94,6 +94,17 @@ main( int argc, char **argv )
     ok = 0;
   if( memcmp(secret, recomb, SECRET_LEN) )
     ok = 0;
+  /* Stage 7, attempt a recombination with shares 3, 2, and 1 */
+  sharenrs[0] = '2';
+  sharenrs[2] = '0';
+  gfshare_ctx_dec_newshares( G, sharenrs );
+  gfshare_ctx_dec_giveshare( G, 0, share3 );
+  gfshare_ctx_dec_giveshare( G, 1, share2 );
+  gfshare_ctx_dec_giveshare( G, 2, share1 );
+  if( gfshare_ctx_dec_extract( G, recomb, 3 ) )
+    ok = 0;
+  if( memcmp(secret, recomb, SECRET_LEN) )
+    ok = 0;
   gfshare_ctx_free( G );
   free(sharenrs);
   free(recomb);
