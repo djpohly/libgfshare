@@ -130,7 +130,7 @@ do_gfsplit( unsigned int sharecount,
     gfshare_ctx_enc_setsecret( G, bytes_read, buffer );
     for( i = 0; i < sharecount; ++i ) {
       unsigned int bytes_written;
-      gfshare_ctx_enc_getshare( G, i, bytes_read, buffer );
+      gfshare_ctx_enc_getshare( G, sharenrs[i], bytes_read, buffer );
       bytes_written = fwrite( buffer, 1, bytes_read, outputfiles[i] );
       if( bytes_read != bytes_written ) {
         perror(outputfilenames[i]);

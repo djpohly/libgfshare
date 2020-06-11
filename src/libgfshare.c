@@ -163,20 +163,20 @@ gfshare_ctx_enc_setsecret( gfshare_ctx* ctx,
 
 /* Extract a share from the context. 
  * 'share' must be preallocated and at least 'size' bytes long.
- * 'sharenr' is the index into the 'sharenrs' array of the share you want.
+ * 'coord' is the coordinate of the share you want.
  */
 int
 gfshare_ctx_enc_getshare( const gfshare_ctx* ctx,
-                          unsigned char sharenr,
+                          unsigned char coord,
                           unsigned int size,
                           unsigned char share[static size])
 {
-  if (sharenr >= ctx->sharecount) {
+  if (coord == 0) {
     errno = EINVAL;
     return 1;
   }
   unsigned int pos, coefficient;
-  unsigned int ilog = logs[ctx->sharenrs[sharenr]];
+  unsigned int ilog = logs[coord];
   unsigned char *coefficient_ptr = ctx->buffer;
   unsigned char *share_ptr;
   for( pos = 0; pos < size; ++pos )

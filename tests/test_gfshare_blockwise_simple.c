@@ -49,9 +49,9 @@ main( int argc, char **argv )
   /* Stage 2, split it three ways with a threshold of 2 */
   G = gfshare_ctx_init_enc( sharenrs, 3, 2, SECRET_LEN );
   gfshare_ctx_enc_setsecret( G, SECRET_LEN, secret );
-  gfshare_ctx_enc_getshare( G, 0, SECRET_LEN, share1 );
-  gfshare_ctx_enc_getshare( G, 1, SECRET_LEN, share2 );
-  gfshare_ctx_enc_getshare( G, 2, SECRET_LEN, share3 );
+  gfshare_ctx_enc_getshare( G, '0', SECRET_LEN, share1 );
+  gfshare_ctx_enc_getshare( G, '1', SECRET_LEN, share2 );
+  gfshare_ctx_enc_getshare( G, '2', SECRET_LEN, share3 );
   gfshare_ctx_free( G );
   /* Prep the decode shape */
   G = gfshare_ctx_init_dec( sharenrs, 3, 2, SECRET_LEN );
