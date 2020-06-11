@@ -60,24 +60,21 @@ main( int argc, char **argv )
   /* Stage 3, attempt a recombination with shares 1 and 2 */
   pshares[0] = share1; coords[0] = '0';
   pshares[1] = share2; coords[1] = '1';
-  gfshare_ctx_dec_giveshares( G, 2, coords, SECRET_LEN, pshares );
-  if( gfshare_ctx_dec_extract( G, SECRET_LEN, recomb, 2 ) )
+  if (gfshare_ctx_dec_recombine( G, 2, coords, SECRET_LEN, pshares, recomb ))
     ok = 0;
   if( memcmp(secret, recomb, SECRET_LEN) )
     ok = 0;
   /* Stage 4, attempt a recombination with shares 1 and 3 */
   pshares[0] = share1; coords[0] = '0';
   pshares[1] = share3; coords[1] = '2';
-  gfshare_ctx_dec_giveshares( G, 2, coords, SECRET_LEN, pshares );
-  if( gfshare_ctx_dec_extract( G, SECRET_LEN, recomb, 2 ) )
+  if (gfshare_ctx_dec_recombine( G, 2, coords, SECRET_LEN, pshares, recomb ))
     ok = 0;
   if( memcmp(secret, recomb, SECRET_LEN) )
     ok = 0;
   /* Stage 5, attempt a recombination with shares 2 and 3 */
   pshares[0] = share2; coords[0] = '1';
   pshares[1] = share3; coords[1] = '2';
-  gfshare_ctx_dec_giveshares( G, 2, coords, SECRET_LEN, pshares );
-  if( gfshare_ctx_dec_extract( G, SECRET_LEN, recomb, 2 ) )
+  if (gfshare_ctx_dec_recombine( G, 2, coords, SECRET_LEN, pshares, recomb ))
     ok = 0;
   if( memcmp(secret, recomb, SECRET_LEN) )
     ok = 0;
@@ -85,8 +82,7 @@ main( int argc, char **argv )
   pshares[0] = share1; coords[0] = '0';
   pshares[1] = share2; coords[1] = '1';
   pshares[2] = share3; coords[2] = '2';
-  gfshare_ctx_dec_giveshares( G, 3, coords, SECRET_LEN, pshares );
-  if( gfshare_ctx_dec_extract( G, SECRET_LEN, recomb, 3 ) )
+  if (gfshare_ctx_dec_recombine( G, 3, coords, SECRET_LEN, pshares, recomb ))
     ok = 0;
   if( memcmp(secret, recomb, SECRET_LEN) )
     ok = 0;
@@ -94,8 +90,7 @@ main( int argc, char **argv )
   pshares[0] = share3; coords[0] = '2';
   pshares[1] = share2; coords[1] = '1';
   pshares[2] = share1; coords[2] = '0';
-  gfshare_ctx_dec_giveshares( G, 3, coords, SECRET_LEN, pshares );
-  if( gfshare_ctx_dec_extract( G, SECRET_LEN, recomb, 3 ) )
+  if (gfshare_ctx_dec_recombine( G, 3, coords, SECRET_LEN, pshares, recomb ))
     ok = 0;
   if( memcmp(secret, recomb, SECRET_LEN) )
     ok = 0;
@@ -104,8 +99,7 @@ main( int argc, char **argv )
   pshares[1] = share2; coords[1] = '1';
   pshares[2] = share3; coords[2] = '2';
   share2[3]++;
-  gfshare_ctx_dec_giveshares( G, 3, coords, SECRET_LEN, pshares );
-  if( !gfshare_ctx_dec_extract( G, SECRET_LEN, recomb, 3 ) )
+  if (!gfshare_ctx_dec_recombine( G, 3, coords, SECRET_LEN, pshares, recomb ))
     ok = 0;
   gfshare_ctx_free( G );
   free(recomb);

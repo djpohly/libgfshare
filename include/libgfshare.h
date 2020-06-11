@@ -72,21 +72,15 @@ int gfshare_ctx_enc_getshares(const gfshare_ctx* /* ctx */,
 
 /* ----------------------------------------------------[ Recombination ]---- */
 
-/* Provide a share context with shares.
- */
-int gfshare_ctx_dec_giveshares(gfshare_ctx* /* ctx */,
-                               unsigned int /* nshares */,
-                               unsigned char* /* coords */,
-                               unsigned int /* size */,
-                               unsigned char** /* pshares */);
-
-/* Extract the secret by interpolation of the shares.
+/* Extract the secret by interpolation of the provided shares.
  * secretbuf must be allocated and at least 'size' bytes long
  */
-int gfshare_ctx_dec_extract(const gfshare_ctx* /* ctx */,
-                            unsigned int /* size */,
-                            unsigned char* /* secretbuf */,
-                            unsigned int /* integrity */);
+int gfshare_ctx_dec_recombine(gfshare_ctx* /* ctx */,
+                              unsigned int /* nshares */,
+                              unsigned char* /* coords */,
+                              unsigned int /* size */,
+                              unsigned char** /* pshares */,
+                              unsigned char* /* secretbuf */);
 
 #endif /* LIBGFSHARE_H */
 

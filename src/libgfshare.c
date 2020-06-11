@@ -201,7 +201,7 @@ gfshare_ctx_enc_getshares( const gfshare_ctx* ctx,
 
 /* Provide a share context with shares.
  */
-int
+static int
 gfshare_ctx_dec_giveshares( gfshare_ctx* ctx,
                             unsigned int nshares,
                             unsigned char coords[static nshares],
@@ -218,7 +218,7 @@ gfshare_ctx_dec_giveshares( gfshare_ctx* ctx,
 /* Extract the secret by interpolation of the shares.
  * secretbuf must be allocated and at least 'size' bytes long
  */
-int
+static int
 gfshare_ctx_dec_extract( const gfshare_ctx* ctx,
                          unsigned int size,
                          unsigned char secretbuf[static size],
@@ -291,5 +291,20 @@ gfshare_ctx_dec_extract( const gfshare_ctx* ctx,
     for( j = 0; j < size; ++j )
       if( ctx->buffer[ctx->maxsize * i + j] )
         return 1;
+  return 0;
+}
+
+int
+gfshare_ctx_dec_recombine( gfshare_ctx* ctx,
+                           unsigned int nshares,
+                           unsigned char coords[static nshares],
+                           unsigned int size,
+                           unsigned char* pshares[static nshares],
+                           unsigned char secretbuf[static size])
+{
+  if (gfshare_ctx_dec_giveshares(ctx, nshares, coords, size, pshares))
+    return 1;
+  if (gfshare_ctx_dec_extract(ctx, size, secretbuf, nshares))
+    return 1;
   return 0;
 }
