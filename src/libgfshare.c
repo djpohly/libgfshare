@@ -107,7 +107,7 @@ gfshare_ctx_free( gfshare_ctx* ctx )
 static void 
 gfshare_ctx_enc_setsecret( gfshare_ctx* ctx,
                            unsigned int size,
-                           const unsigned char secret[static size])
+                           unsigned char secret[static size])
 {
   memcpy( ctx->buffer + ((ctx->threshold-1) * ctx->maxsize),
           secret,
@@ -120,7 +120,7 @@ gfshare_ctx_enc_setsecret( gfshare_ctx* ctx,
  * 'coord' is the coordinate of the share you want.
  */
 static int
-gfshare_ctx_enc_getshare( const gfshare_ctx* ctx,
+gfshare_ctx_enc_getshare( gfshare_ctx* ctx,
                           unsigned char coord,
                           unsigned int size,
                           unsigned char share[static size])
@@ -154,7 +154,7 @@ gfshare_ctx_enc_getshare( const gfshare_ctx* ctx,
  * 'coords' is an array of the coordinates of the shares you want.
  */
 static int
-gfshare_ctx_enc_getshares( const gfshare_ctx* ctx,
+gfshare_ctx_enc_getshares( gfshare_ctx* ctx,
                            unsigned int nshares,
                            unsigned char coords[static nshares],
                            unsigned int size,
