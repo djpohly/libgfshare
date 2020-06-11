@@ -103,70 +103,6 @@ gfshare_ctx_free( gfshare_ctx* ctx )
 
 /* --------------------------------------------------------[ Splitting ]---- */
 
-/* Provide a secret to the encoder. (this re-scrambles the coefficients) */
-static void 
-gfshare_ctx_enc_setsecret( gfshare_ctx* ctx,
-                           unsigned int size,
-                           unsigned char secret[static size])
-{
-  memcpy( ctx->buffer + ((ctx->threshold-1) * ctx->maxsize),
-          secret,
-          size );
-  gfshare_fill_rand( ctx->buffer, (ctx->threshold-1) * ctx->maxsize );
-}
-
-/* Extract a share from the context. 
- * 'share' must be preallocated and at least 'size' bytes long.
- * 'coord' is the coordinate of the share you want.
- */
-static int
-gfshare_ctx_enc_getshare( gfshare_ctx* ctx,
-                          unsigned char coord,
-                          unsigned int size,
-                          unsigned char share[static size])
-{
-  if (coord == 0) {
-    errno = EINVAL;
-    return 1;
-  }
-  unsigned int pos, coefficient;
-  unsigned int ilog = logs[coord];
-  unsigned char *coefficient_ptr = ctx->buffer;
-  unsigned char *share_ptr;
-  for( pos = 0; pos < size; ++pos )
-    share[pos] = *(coefficient_ptr++);
-  for( coefficient = 1; coefficient < ctx->threshold; ++coefficient ) {
-    share_ptr = share;
-    coefficient_ptr = ctx->buffer + coefficient * ctx->maxsize;
-    for( pos = 0; pos < size; ++pos ) {
-      unsigned char share_byte = *share_ptr;
-      if( share_byte )
-        share_byte = exps[ilog + logs[share_byte]];
-      *share_ptr++ = share_byte ^ *coefficient_ptr++;
-    }
-  }
-  return 0;
-}
-
-/* Extract several shares from the context.
- * Each element of 'pshares' must point to preallocated space that is at least
- *   'size' bytes long.
- * 'coords' is an array of the coordinates of the shares you want.
- */
-static int
-gfshare_ctx_enc_getshares( gfshare_ctx* ctx,
-                           unsigned int nshares,
-                           unsigned char coords[static nshares],
-                           unsigned int size,
-                           unsigned char* pshares[static nshares])
-{
-  unsigned int sharenr;
-  for( sharenr = 0; sharenr < nshares; ++sharenr )
-    if (gfshare_ctx_enc_getshare(ctx, coords[sharenr], size, pshares[sharenr]))
-      return 1;
-  return 0;
-}
-
 /* Extract several shares from the provided secret.
  * Each 'pshares[i]' must be preallocated and at least 'size' bytes long.
  * 'coords' is an array of the coordinates of the shares you want.
@@ -178,8 +114,36 @@ int gfshare_ctx_enc_split(gfshare_ctx* ctx,
                           unsigned char coords[static nshares],
                           unsigned char* pshares[static nshares])
 {
-  gfshare_ctx_enc_setsecret(ctx, size, secret);
-  gfshare_ctx_enc_getshares(ctx, nshares, coords, size, pshares);
+  unsigned int sharenr;
+
+  memcpy( ctx->buffer + ((ctx->threshold-1) * ctx->maxsize),
+          secret,
+          size );
+  gfshare_fill_rand( ctx->buffer, (ctx->threshold-1) * ctx->maxsize );
+
+  for( sharenr = 0; sharenr < nshares; ++sharenr ) {
+    if (coords[sharenr] == 0) {
+      errno = EINVAL;
+      return 1;
+    }
+    unsigned int pos, coefficient;
+    unsigned int ilog = logs[coords[sharenr]];
+    unsigned char *coefficient_ptr = ctx->buffer;
+    unsigned char *share_ptr;
+    for( pos = 0; pos < size; ++pos )
+      pshares[sharenr][pos] = *(coefficient_ptr++);
+    for( coefficient = 1; coefficient < ctx->threshold; ++coefficient ) {
+      share_ptr = pshares[sharenr];
+      coefficient_ptr = ctx->buffer + coefficient * ctx->maxsize;
+      for( pos = 0; pos < size; ++pos ) {
+        unsigned char share_byte = *share_ptr;
+        if( share_byte )
+          share_byte = exps[ilog + logs[share_byte]];
+        *share_ptr++ = share_byte ^ *coefficient_ptr++;
+      }
+    }
+  }
+  return 0;
 }
 
 /* ----------------------------------------------------[ Recombination ]---- */
