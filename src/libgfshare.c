@@ -39,7 +39,6 @@ struct _gfshare_ctx {
   unsigned int maxshares;
   unsigned int threshold;
   unsigned int maxsize;
-  unsigned char* buffer;
 };
 
 static void
@@ -79,15 +78,6 @@ gfshare_ctx_init( unsigned int maxshares,
   ctx->threshold = threshold;
   ctx->maxsize = maxsize;
   
-  ctx->buffer = XMALLOC( maxshares * maxsize );
-  
-  if( ctx->buffer == NULL ) {
-    int saved_errno = errno;
-    XFREE( ctx );
-    errno = saved_errno;
-    return NULL;
-  }
-  
   return ctx;
 }
 
@@ -95,8 +85,6 @@ gfshare_ctx_init( unsigned int maxshares,
 void 
 gfshare_ctx_free( gfshare_ctx* ctx )
 {
-  gfshare_fill_rand( ctx->buffer, ctx->maxshares * ctx->maxsize );
-  XFREE( ctx->buffer );
   gfshare_fill_rand( (unsigned char*)ctx, sizeof(struct _gfshare_ctx) );
   XFREE( ctx );
 }
@@ -115,11 +103,10 @@ int gfshare_ctx_enc_split(gfshare_ctx* ctx,
                           unsigned char* pshares[static nshares])
 {
   unsigned int sharenr;
+  unsigned char buffer[nshares][size];
 
-  memcpy( ctx->buffer + ((ctx->threshold-1) * ctx->maxsize),
-          secret,
-          size );
-  gfshare_fill_rand( ctx->buffer, (ctx->threshold-1) * ctx->maxsize );
+  memcpy( buffer[ctx->threshold - 1], secret, size );
+  gfshare_fill_rand( buffer[0], (ctx->threshold - 1) * size );
 
   for( sharenr = 0; sharenr < nshares; ++sharenr ) {
     if (coords[sharenr] == 0) {
@@ -128,13 +115,13 @@ int gfshare_ctx_enc_split(gfshare_ctx* ctx,
     }
     unsigned int pos, coefficient;
     unsigned int ilog = logs[coords[sharenr]];
-    unsigned char *coefficient_ptr = ctx->buffer;
+    unsigned char *coefficient_ptr = buffer[0];
     unsigned char *share_ptr;
     for( pos = 0; pos < size; ++pos )
       pshares[sharenr][pos] = *(coefficient_ptr++);
     for( coefficient = 1; coefficient < ctx->threshold; ++coefficient ) {
       share_ptr = pshares[sharenr];
-      coefficient_ptr = ctx->buffer + coefficient * ctx->maxsize;
+      coefficient_ptr = buffer[coefficient];
       for( pos = 0; pos < size; ++pos ) {
         unsigned char share_byte = *share_ptr;
         if( share_byte )
