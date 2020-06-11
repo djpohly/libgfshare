@@ -108,7 +108,7 @@ gfshare_recombine( unsigned int size,
                    unsigned char* pshares[static nshares])
 {
   unsigned int i, j, k;
-  unsigned char *secret_ptr, *share_ptr;
+  unsigned char s, ls;
   unsigned char buffer[nshares][size];
 
   if( nshares < threshold ) {
@@ -149,13 +149,15 @@ gfshare_recombine( unsigned int size,
       tops[j] %= 0xff;
     }
 
-    share_ptr = buffer[i];
-    for( j = 0; j < size; ++j )
-      if( share_ptr[j] ) {
-        secret[j] ^= exps[Li_top + logs[share_ptr[j]]];
+    for( j = 0; j < size; ++j ) {
+      s = buffer[i][j];
+      if( s ) {
+        ls = logs[s];
+        secret[j] ^= exps[Li_top + ls];
         for( k = threshold; k < nshares; ++k )
-          buffer[k][j] ^= exps[tops[k] + logs[share_ptr[j]]];
+          buffer[k][j] ^= exps[tops[k] + ls];
       }
+    }
   }
   for( i = threshold; i < nshares; ++i )
     for( j = 0; j < size; ++j )
