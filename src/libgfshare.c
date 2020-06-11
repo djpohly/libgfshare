@@ -196,7 +196,7 @@ gfshare_ctx_dec_recombine( gfshare_ctx* ctx,
                            unsigned char* pshares[static nshares],
                            unsigned char secretbuf[static size])
 {
-  unsigned int i, j, k, ki, li;
+  unsigned int i, j, k;
   unsigned char *secret_ptr, *share_ptr;
 
   if( nshares < ctx->threshold || nshares > ctx->maxshares ) {
@@ -211,37 +211,20 @@ gfshare_ctx_dec_recombine( gfshare_ctx* ctx,
     }
     memcpy( ctx->buffer + (i * ctx->maxsize), pshares[i], size );
   }
-
-  /* Find indices at which we hit threshold and nshares parameter, accounting
-   * for empty shares.  If not enough shares are provided, it is an error. */
-  for( i = ki = 0; i < ctx->threshold && ki < ctx->maxshares; ++ki )
-    i++;
-  if( i < ctx->threshold ) {
-    errno = EINVAL;
-    return 1;
-  }
-
-  /* At this point, i == ctx->threshold */
-  for( li = ki; i < nshares && li < ctx->maxshares; ++li )
-    i++;
-  if( i < nshares ) {
-    errno = EINVAL;
-    return 1;
-  }
   
   memset(secretbuf, 0, size);
   
-  for( i = 0; i < ki; ++i ) {
+  for( i = 0; i < ctx->threshold; ++i ) {
     /* Compute L(i) as per Lagrange Interpolation */
     unsigned Li_top = 0, Li_bottom = 0;
     unsigned tops[ctx->maxshares];
-    for( j = ki; j < li; ++j )
+    for( j = ctx->threshold; j < nshares; ++j )
       tops[j] = 0;
     
-    for( j = 0; j < ki; ++j ) {
+    for( j = 0; j < ctx->threshold; ++j ) {
       if( i == j ) continue;
       Li_top += logs[0 ^ coords[j]];
-      for( k = ki; k < li; ++k )
+      for( k = ctx->threshold; k < nshares; ++k )
         tops[k] += logs[coords[k] ^ coords[j]];
       Li_bottom += logs[(coords[i]) ^ (coords[j])];
     }
@@ -249,7 +232,7 @@ gfshare_ctx_dec_recombine( gfshare_ctx* ctx,
     Li_top += 0xff - Li_bottom;
     Li_top %= 0xff;
     /* Li_top is now log(L(i)) */
-    for( j = ki; j < li; ++j ) {
+    for( j = ctx->threshold; j < nshares; ++j ) {
       tops[j] += 0xff - Li_bottom;
       tops[j] %= 0xff;
     }
@@ -258,11 +241,11 @@ gfshare_ctx_dec_recombine( gfshare_ctx* ctx,
     for( j = 0; j < size; ++j )
       if( share_ptr[j] ) {
         secretbuf[j] ^= exps[Li_top + logs[share_ptr[j]]];
-        for( k = ki; k < li; ++k )
+        for( k = ctx->threshold; k < nshares; ++k )
           ctx->buffer[ctx->maxsize * k + j] ^= exps[tops[k] + logs[share_ptr[j]]];
       }
   }
-  for( i = ki; i < li; ++i )
+  for( i = ctx->threshold; i < nshares; ++i )
     for( j = 0; j < size; ++j )
       if( ctx->buffer[ctx->maxsize * i + j] )
         return 1;
