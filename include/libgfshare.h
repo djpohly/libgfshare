@@ -60,15 +60,6 @@ void gfshare_ctx_enc_setsecret(gfshare_ctx* /* ctx */,
                                unsigned int /* size */,
                                const unsigned char* /* secret */);
 
-/* Extract a share from the context. 
- * 'share' must be preallocated and at least 'size' bytes long.
- * 'coord' is the coordinate of the share you want.
- */
-int gfshare_ctx_enc_getshare(const gfshare_ctx* /* ctx */,
-                             unsigned char /* coord */,
-                             unsigned int /* size */,
-                             unsigned char* /* share */);
-
 /* Extract several shares from the context.
  * Each 'pshares[i]' must be preallocated and at least 'size' bytes long.
  * 'coords' is an array of the coordinates of the shares you want.

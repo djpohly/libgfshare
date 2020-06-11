@@ -49,10 +49,11 @@ main( int argc, char **argv )
     secret[i] = (random() & 0xff00) >> 8;
   /* Stage 2, split it three ways with a threshold of 2 */
   G = gfshare_ctx_init_enc( 3, 2, SECRET_LEN );
+  pshares[0] = share1; coords[0] = '0';
+  pshares[1] = share2; coords[1] = '1';
+  pshares[2] = share3; coords[2] = '2';
   gfshare_ctx_enc_setsecret( G, SECRET_LEN, secret );
-  gfshare_ctx_enc_getshare( G, '0', SECRET_LEN, share1 );
-  gfshare_ctx_enc_getshare( G, '1', SECRET_LEN, share2 );
-  gfshare_ctx_enc_getshare( G, '2', SECRET_LEN, share3 );
+  gfshare_ctx_enc_getshares( G, 3, coords, SECRET_LEN, pshares );
   gfshare_ctx_free( G );
   /* Prep the decode shape */
   G = gfshare_ctx_init_dec( 3, 2, SECRET_LEN );

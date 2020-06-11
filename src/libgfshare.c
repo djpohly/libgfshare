@@ -149,7 +149,7 @@ gfshare_ctx_enc_setsecret( gfshare_ctx* ctx,
  * 'share' must be preallocated and at least 'size' bytes long.
  * 'coord' is the coordinate of the share you want.
  */
-int
+static int
 gfshare_ctx_enc_getshare( const gfshare_ctx* ctx,
                           unsigned char coord,
                           unsigned int size,
