@@ -69,6 +69,16 @@ int gfshare_ctx_enc_getshare(const gfshare_ctx* /* ctx */,
                              unsigned int /* size */,
                              unsigned char* /* share */);
 
+/* Extract several shares from the context.
+ * Each 'pshares[i]' must be preallocated and at least 'size' bytes long.
+ * 'coords' is an array of the coordinates of the shares you want.
+ */
+int gfshare_ctx_enc_getshares(const gfshare_ctx* /* ctx */,
+                              unsigned int /* nshares */,
+                              unsigned char* /* coords */,
+                              unsigned int /* size */,
+                              unsigned char** /* pshares */);
+
 /* ----------------------------------------------------[ Recombination ]---- */
 
 /* Provide a share context with shares.
