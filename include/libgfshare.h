@@ -27,24 +27,14 @@
 #define LIBGFSHARE_H
 
 
-typedef struct _gfshare_ctx gfshare_ctx;
-
 typedef void (*gfshare_rand_func_t)(unsigned char*, unsigned int);
 
 /* This will, by default, use random(). It's not very good so you should
  * replace it (perhaps with a function which reads from /dev/urandom).
- * If you can't be bothered, be sure to srandom() before you use any
- * of the gfshare_ctx_enc_* functions
+ * If you can't be bothered, be sure to srandom() before you use the
+ * gfshare_split function
  */
 extern gfshare_rand_func_t gfshare_fill_rand;
-
-/* ------------------------------------------------------[ Preparation ]---- */
-
-/* Initialise a gfshare context */
-gfshare_ctx* gfshare_ctx_init(unsigned char /* threshold */);
-
-/* Free a share context's memory. */
-void gfshare_ctx_free(gfshare_ctx* /* ctx */);
 
 /* --------------------------------------------------------[ Splitting ]---- */
 
@@ -52,24 +42,23 @@ void gfshare_ctx_free(gfshare_ctx* /* ctx */);
  * Each 'pshares[i]' must be preallocated and at least 'size' bytes long.
  * 'coords' is an array of the coordinates of the shares you want.
  */
-int gfshare_ctx_enc_split(gfshare_ctx* /* ctx */,
-                          unsigned int /* size */,
-                          unsigned char* /* secret */,
-                          unsigned int /* nshares */,
-                          unsigned char* /* coords */,
-                          unsigned char** /* pshares */);
+int gfshare_split(unsigned int /* size */,
+                  unsigned char* /* secret */,
+                  unsigned int /* threshold */,
+                  unsigned int /* nshares */,
+                  unsigned char* /* coords */,
+                  unsigned char** /* pshares */);
 
 /* ----------------------------------------------------[ Recombination ]---- */
 
 /* Extract the secret by interpolation of the provided shares.
- * secretbuf must be allocated and at least 'size' bytes long
+ * 'secret' must be allocated and at least 'size' bytes long
  */
-int gfshare_ctx_dec_recombine(gfshare_ctx* /* ctx */,
-                              unsigned int /* nshares */,
-                              unsigned char* /* coords */,
-                              unsigned int /* size */,
-                              unsigned char** /* pshares */,
-                              unsigned char* /* secretbuf */);
+int gfshare_recombine(unsigned int /* size */,
+                      unsigned char* /* secret */,
+                      unsigned int /* threshold */,
+                      unsigned int /* nshares */,
+                      unsigned char* /* coords */,
+                      unsigned char** /* pshares */);
 
 #endif /* LIBGFSHARE_H */
-

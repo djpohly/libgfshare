@@ -98,7 +98,6 @@ do_gfcombine( char *outputfilename, char **inputfilenames, int filecount )
   int i;
   unsigned char *buffer = malloc( BUFFER_SIZE * filecount );
   unsigned char **pshares = malloc( sizeof(unsigned char *) * filecount );
-  gfshare_ctx *G;
   unsigned int len1 = 0;
   
   if( inputfiles == NULL || sharenrs == NULL || buffer == NULL ) {
@@ -133,8 +132,6 @@ do_gfcombine( char *outputfilename, char **inputfilenames, int filecount )
     }
   }
   
-  G = gfshare_ctx_init( filecount );
-  
   while( !feof(inputfiles[0]) ) {
     unsigned int bytes_read = fread( buffer, 1, BUFFER_SIZE, inputfiles[0] );
     unsigned int bytes_written;
@@ -143,15 +140,13 @@ do_gfcombine( char *outputfilename, char **inputfilenames, int filecount )
                                          inputfiles[i] );
       if( bytes_read != bytes_read_2 ) {
         fprintf( stderr, "Mismatch during file read.\n");
-        gfshare_ctx_free( G );
         return 1;
       }
     }
-    gfshare_ctx_dec_recombine( G, filecount, sharenrs, bytes_read, pshares, buffer);
+    gfshare_recombine( bytes_read, buffer, filecount, filecount, sharenrs, pshares);
     bytes_written = fwrite( buffer, 1, bytes_read, outfile );
     if( bytes_written != bytes_read ) {
       fprintf( stderr, "Mismatch during file write.\n");
-      gfshare_ctx_free( G );
       return 1;
     }
   }

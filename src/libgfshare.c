@@ -35,10 +35,6 @@
 #define XMALLOC malloc
 #define XFREE free
 
-struct _gfshare_ctx {
-  unsigned int threshold;
-};
-
 static void
 _gfshare_fill_rand_using_random( unsigned char* buffer,
                                  unsigned int count )
@@ -53,54 +49,24 @@ _gfshare_fill_rand_using_random( unsigned char* buffer,
 
 gfshare_rand_func_t gfshare_fill_rand = _gfshare_fill_rand_using_random;
 
-/* ------------------------------------------------------[ Preparation ]---- */
-
-gfshare_ctx *
-gfshare_ctx_init( unsigned char threshold )
-{
-  gfshare_ctx *ctx;
-
-  /* Threshold must be nonzero */
-  if( threshold < 1 ) {
-    errno = EINVAL;
-    return NULL;
-  }
-  
-  ctx = XMALLOC( sizeof(struct _gfshare_ctx) );
-  if( ctx == NULL )
-    return NULL; /* errno should still be set from XMALLOC() */
-  
-  ctx->threshold = threshold;
-  
-  return ctx;
-}
-
-/* Free a share context's memory. */
-void 
-gfshare_ctx_free( gfshare_ctx* ctx )
-{
-  gfshare_fill_rand( (unsigned char*)ctx, sizeof(struct _gfshare_ctx) );
-  XFREE( ctx );
-}
-
 /* --------------------------------------------------------[ Splitting ]---- */
 
 /* Extract several shares from the provided secret.
  * Each 'pshares[i]' must be preallocated and at least 'size' bytes long.
  * 'coords' is an array of the coordinates of the shares you want.
  */
-int gfshare_ctx_enc_split(gfshare_ctx* ctx,
-                          unsigned int size,
-                          unsigned char secret[static size],
-                          unsigned int nshares,
-                          unsigned char coords[static nshares],
-                          unsigned char* pshares[static nshares])
+int gfshare_split(unsigned int size,
+                  unsigned char secret[static size],
+                  unsigned int threshold,
+                  unsigned int nshares,
+                  unsigned char coords[static nshares],
+                  unsigned char* pshares[static nshares])
 {
   unsigned int sharenr;
   unsigned char buffer[nshares][size];
 
-  memcpy( buffer[ctx->threshold - 1], secret, size );
-  gfshare_fill_rand( buffer[0], (ctx->threshold - 1) * size );
+  memcpy( buffer[threshold - 1], secret, size );
+  gfshare_fill_rand( buffer[0], (threshold - 1) * size );
 
   for( sharenr = 0; sharenr < nshares; ++sharenr ) {
     if (coords[sharenr] == 0) {
@@ -113,7 +79,7 @@ int gfshare_ctx_enc_split(gfshare_ctx* ctx,
     unsigned char *share_ptr;
     for( pos = 0; pos < size; ++pos )
       pshares[sharenr][pos] = *(coefficient_ptr++);
-    for( coefficient = 1; coefficient < ctx->threshold; ++coefficient ) {
+    for( coefficient = 1; coefficient < threshold; ++coefficient ) {
       share_ptr = pshares[sharenr];
       coefficient_ptr = buffer[coefficient];
       for( pos = 0; pos < size; ++pos ) {
@@ -131,21 +97,21 @@ int gfshare_ctx_enc_split(gfshare_ctx* ctx,
 
 /* Extract the secret by interpolation of the provided shares.
  * coords must not contain any elements which are 0
- * secretbuf must be allocated and at least 'size' bytes long
+ * 'secret' must be allocated and at least 'size' bytes long
  */
 int
-gfshare_ctx_dec_recombine( gfshare_ctx* ctx,
-                           unsigned int nshares,
-                           unsigned char coords[static nshares],
-                           unsigned int size,
-                           unsigned char* pshares[static nshares],
-                           unsigned char secretbuf[static size])
+gfshare_recombine( unsigned int size,
+                   unsigned char secret[static size],
+                   unsigned int threshold,
+                   unsigned int nshares,
+                   unsigned char coords[static nshares],
+                   unsigned char* pshares[static nshares])
 {
   unsigned int i, j, k;
   unsigned char *secret_ptr, *share_ptr;
   unsigned char buffer[nshares][size];
 
-  if( nshares < ctx->threshold ) {
+  if( nshares < threshold ) {
     errno = EINVAL;
     return 1;
   }
@@ -158,19 +124,19 @@ gfshare_ctx_dec_recombine( gfshare_ctx* ctx,
     memcpy( buffer[i], pshares[i], size );
   }
   
-  memset(secretbuf, 0, size);
+  memset(secret, 0, size);
   
-  for( i = 0; i < ctx->threshold; ++i ) {
+  for( i = 0; i < threshold; ++i ) {
     /* Compute L(i) as per Lagrange Interpolation */
     unsigned Li_top = 0, Li_bottom = 0;
     unsigned tops[nshares];
-    for( j = ctx->threshold; j < nshares; ++j )
+    for( j = threshold; j < nshares; ++j )
       tops[j] = 0;
     
-    for( j = 0; j < ctx->threshold; ++j ) {
+    for( j = 0; j < threshold; ++j ) {
       if( i == j ) continue;
       Li_top += logs[coords[j]];
-      for( k = ctx->threshold; k < nshares; ++k )
+      for( k = threshold; k < nshares; ++k )
         tops[k] += logs[coords[k] ^ coords[j]];
       Li_bottom += logs[coords[i] ^ coords[j]];
     }
@@ -178,7 +144,7 @@ gfshare_ctx_dec_recombine( gfshare_ctx* ctx,
     Li_top += 0xff - Li_bottom;
     Li_top %= 0xff;
     /* Li_top is now log(L(i)) */
-    for( j = ctx->threshold; j < nshares; ++j ) {
+    for( j = threshold; j < nshares; ++j ) {
       tops[j] += 0xff - Li_bottom;
       tops[j] %= 0xff;
     }
@@ -186,12 +152,12 @@ gfshare_ctx_dec_recombine( gfshare_ctx* ctx,
     share_ptr = buffer[i];
     for( j = 0; j < size; ++j )
       if( share_ptr[j] ) {
-        secretbuf[j] ^= exps[Li_top + logs[share_ptr[j]]];
-        for( k = ctx->threshold; k < nshares; ++k )
+        secret[j] ^= exps[Li_top + logs[share_ptr[j]]];
+        for( k = threshold; k < nshares; ++k )
           buffer[k][j] ^= exps[tops[k] + logs[share_ptr[j]]];
       }
   }
-  for( i = ctx->threshold; i < nshares; ++i )
+  for( i = threshold; i < nshares; ++i )
     for( j = 0; j < size; ++j )
       if( buffer[i][j] )
         return 1;

@@ -84,7 +84,6 @@ do_gfsplit( unsigned int sharecount,
   char* outputfilebuffer = malloc( strlen(_outputstem) + 5 );
   unsigned char* buffer = malloc( BUFFER_SIZE * sharecount );
   unsigned char** pshares = malloc( sizeof(unsigned char*) * sharecount );
-  gfshare_ctx *G;
   
   if( sharenrs == NULL || outputfiles == NULL || outputfilenames == NULL || outputfilebuffer == NULL || buffer == NULL ) {
     perror( "malloc" );
@@ -120,26 +119,19 @@ do_gfsplit( unsigned int sharecount,
     outputfilenames[i] = strdup(outputfilebuffer);
   }
   /* All open, all ready and raring to go... */
-  G = gfshare_ctx_init( threshold );
-  if( !G ) {
-    perror("gfshare_ctx_init_enc");
-    return 1;
-  }
   while( !feof(inputfile) ) {
     unsigned int bytes_read = fread( buffer, 1, BUFFER_SIZE, inputfile );
     if( bytes_read == 0 ) break;
-    gfshare_ctx_enc_split( G, bytes_read, buffer, sharecount, sharenrs, pshares );
+    gfshare_split( bytes_read, buffer, threshold, sharecount, sharenrs, pshares );
     for( i = 0; i < sharecount; ++i ) {
       unsigned int bytes_written;
       bytes_written = fwrite( pshares[i], 1, bytes_read, outputfiles[i] );
       if( bytes_read != bytes_written ) {
         perror(outputfilenames[i]);
-        gfshare_ctx_free( G );
         return 1;
       }
     }
   }
-  gfshare_ctx_free( G );
   fclose(inputfile);
   for( i = 0; i < sharecount; ++i ) {
     fclose(outputfiles[i]);
