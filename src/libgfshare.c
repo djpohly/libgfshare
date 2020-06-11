@@ -39,7 +39,6 @@ struct _gfshare_ctx {
   unsigned int sharecount;
   unsigned int threshold;
   unsigned int maxsize;
-  unsigned char* coords;
   unsigned char* buffer;
 };
 
@@ -79,20 +78,11 @@ gfshare_ctx_init( unsigned int sharecount,
   ctx->sharecount = sharecount;
   ctx->threshold = threshold;
   ctx->maxsize = maxsize;
-  ctx->coords = XMALLOC( sharecount );
-  
-  if( ctx->coords == NULL ) {
-    int saved_errno = errno;
-    XFREE( ctx );
-    errno = saved_errno;
-    return NULL;
-  }
   
   ctx->buffer = XMALLOC( sharecount * maxsize );
   
   if( ctx->buffer == NULL ) {
     int saved_errno = errno;
-    XFREE( ctx->coords );
     XFREE( ctx );
     errno = saved_errno;
     return NULL;
@@ -106,8 +96,6 @@ void
 gfshare_ctx_free( gfshare_ctx* ctx )
 {
   gfshare_fill_rand( ctx->buffer, ctx->sharecount * ctx->maxsize );
-  gfshare_fill_rand( ctx->coords, ctx->sharecount );
-  XFREE( ctx->coords );
   XFREE( ctx->buffer );
   gfshare_fill_rand( (unsigned char*)ctx, sizeof(struct _gfshare_ctx) );
   XFREE( ctx );
@@ -196,43 +184,32 @@ int gfshare_ctx_enc_split(gfshare_ctx* ctx,
 
 /* ----------------------------------------------------[ Recombination ]---- */
 
-/* Provide a share context with shares.
- */
-static int
-gfshare_ctx_dec_giveshares( gfshare_ctx* ctx,
-                            unsigned int nshares,
-                            unsigned char coords[static nshares],
-                            unsigned int size,
-                            unsigned char* pshares[static nshares] )
-{
-  unsigned int sharenr;
-  for( sharenr = 0; sharenr < nshares; ++sharenr )
-    memcpy( ctx->buffer + (sharenr * ctx->maxsize), pshares[sharenr], size );
-  memcpy( ctx->coords, coords, nshares );
-  return 0;
-}
-
-/* Extract the secret by interpolation of the shares.
+/* Extract the secret by interpolation of the provided shares.
  * secretbuf must be allocated and at least 'size' bytes long
  */
-static int
-gfshare_ctx_dec_extract( const gfshare_ctx* ctx,
-                         unsigned int size,
-                         unsigned char secretbuf[static size],
-                         unsigned int integrity )
+int
+gfshare_ctx_dec_recombine( gfshare_ctx* ctx,
+                           unsigned int nshares,
+                           unsigned char coords[static nshares],
+                           unsigned int size,
+                           unsigned char* pshares[static nshares],
+                           unsigned char secretbuf[static size])
 {
   unsigned int i, j, k, ki, li;
   unsigned char *secret_ptr, *share_ptr;
 
-  if( integrity < ctx->threshold || integrity > ctx->sharecount ) {
+  if( nshares < ctx->threshold || nshares > ctx->sharecount ) {
     errno = EINVAL;
     return 1;
   }
 
-  /* Find indices at which we hit threshold and integrity parameter, accounting
+  for( i = 0; i < nshares; ++i )
+    memcpy( ctx->buffer + (i * ctx->maxsize), pshares[i], size );
+
+  /* Find indices at which we hit threshold and nshares parameter, accounting
    * for empty shares.  If not enough shares are provided, it is an error. */
   for( i = ki = 0; i < ctx->threshold && ki < ctx->sharecount; ++ki )
-    if( ctx->coords[ki] != 0 )
+    if( coords[ki] != 0 )
       i++;
   if( i < ctx->threshold ) {
     errno = EINVAL;
@@ -240,10 +217,10 @@ gfshare_ctx_dec_extract( const gfshare_ctx* ctx,
   }
 
   /* At this point, i == ctx->threshold */
-  for( li = ki; i < integrity && li < ctx->sharecount; ++li )
-    if( ctx->coords[li] != 0 )
+  for( li = ki; i < nshares && li < ctx->sharecount; ++li )
+    if( coords[li] != 0 )
       i++;
-  if( i < integrity ) {
+  if( i < nshares ) {
     errno = EINVAL;
     return 1;
   }
@@ -257,15 +234,15 @@ gfshare_ctx_dec_extract( const gfshare_ctx* ctx,
     for( j = ki; j < li; ++j )
       tops[j] = 0;
     
-    if( ctx->coords[i] == 0 ) continue; /* this share is not provided. */
+    if( coords[i] == 0 ) continue; /* this share is not provided. */
     
     for( j = 0; j < ki; ++j ) {
       if( i == j ) continue;
-      if( ctx->coords[j] == 0 ) continue; /* skip empty share */
-      Li_top += logs[0 ^ ctx->coords[j]];
+      if( coords[j] == 0 ) continue; /* skip empty share */
+      Li_top += logs[0 ^ coords[j]];
       for( k = ki; k < li; ++k )
-        tops[k] += logs[ctx->coords[k] ^ ctx->coords[j]];
-      Li_bottom += logs[(ctx->coords[i]) ^ (ctx->coords[j])];
+        tops[k] += logs[coords[k] ^ coords[j]];
+      Li_bottom += logs[(coords[i]) ^ (coords[j])];
     }
     Li_bottom %= 0xff;
     Li_top += 0xff - Li_bottom;
@@ -288,20 +265,5 @@ gfshare_ctx_dec_extract( const gfshare_ctx* ctx,
     for( j = 0; j < size; ++j )
       if( ctx->buffer[ctx->maxsize * i + j] )
         return 1;
-  return 0;
-}
-
-int
-gfshare_ctx_dec_recombine( gfshare_ctx* ctx,
-                           unsigned int nshares,
-                           unsigned char coords[static nshares],
-                           unsigned int size,
-                           unsigned char* pshares[static nshares],
-                           unsigned char secretbuf[static size])
-{
-  if (gfshare_ctx_dec_giveshares(ctx, nshares, coords, size, pshares))
-    return 1;
-  if (gfshare_ctx_dec_extract(ctx, size, secretbuf, nshares))
-    return 1;
   return 0;
 }
