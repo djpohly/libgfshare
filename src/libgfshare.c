@@ -198,6 +198,7 @@ gfshare_ctx_dec_recombine( gfshare_ctx* ctx,
 {
   unsigned int i, j, k;
   unsigned char *secret_ptr, *share_ptr;
+  unsigned char buffer[nshares][size];
 
   if( nshares < ctx->threshold || nshares > ctx->maxshares ) {
     errno = EINVAL;
@@ -209,7 +210,7 @@ gfshare_ctx_dec_recombine( gfshare_ctx* ctx,
       errno = EINVAL;
       return 1;
     }
-    memcpy( ctx->buffer + (i * ctx->maxsize), pshares[i], size );
+    memcpy( buffer[i], pshares[i], size );
   }
   
   memset(secretbuf, 0, size);
@@ -237,17 +238,17 @@ gfshare_ctx_dec_recombine( gfshare_ctx* ctx,
       tops[j] %= 0xff;
     }
 
-    share_ptr = ctx->buffer + (ctx->maxsize * i);
+    share_ptr = buffer[i];
     for( j = 0; j < size; ++j )
       if( share_ptr[j] ) {
         secretbuf[j] ^= exps[Li_top + logs[share_ptr[j]]];
         for( k = ctx->threshold; k < nshares; ++k )
-          ctx->buffer[ctx->maxsize * k + j] ^= exps[tops[k] + logs[share_ptr[j]]];
+          buffer[k][j] ^= exps[tops[k] + logs[share_ptr[j]]];
       }
   }
   for( i = ctx->threshold; i < nshares; ++i )
     for( j = 0; j < size; ++j )
-      if( ctx->buffer[ctx->maxsize * i + j] )
+      if( buffer[i][j] )
         return 1;
   return 0;
 }
