@@ -41,8 +41,7 @@ extern gfshare_rand_func_t gfshare_fill_rand;
 /* ------------------------------------------------------[ Preparation ]---- */
 
 /* Initialise a gfshare context */
-gfshare_ctx* gfshare_ctx_init(unsigned int /* sharecount */,
-                              unsigned char /* threshold */);
+gfshare_ctx* gfshare_ctx_init(unsigned char /* threshold */);
 
 /* Free a share context's memory. */
 void gfshare_ctx_free(gfshare_ctx* /* ctx */);

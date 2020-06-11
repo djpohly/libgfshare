@@ -36,7 +36,6 @@
 #define XFREE free
 
 struct _gfshare_ctx {
-  unsigned int maxshares;
   unsigned int threshold;
 };
 
@@ -57,13 +56,12 @@ gfshare_rand_func_t gfshare_fill_rand = _gfshare_fill_rand_using_random;
 /* ------------------------------------------------------[ Preparation ]---- */
 
 gfshare_ctx *
-gfshare_ctx_init( unsigned int maxshares,
-                  unsigned char threshold )
+gfshare_ctx_init( unsigned char threshold )
 {
   gfshare_ctx *ctx;
 
-  /* Size must be nonzero, and 1 <= threshold <= maxshares */
-  if( threshold < 1 || threshold > maxshares ) {
+  /* Threshold must be nonzero */
+  if( threshold < 1 ) {
     errno = EINVAL;
     return NULL;
   }
@@ -72,7 +70,6 @@ gfshare_ctx_init( unsigned int maxshares,
   if( ctx == NULL )
     return NULL; /* errno should still be set from XMALLOC() */
   
-  ctx->maxshares = maxshares;
   ctx->threshold = threshold;
   
   return ctx;
@@ -148,7 +145,7 @@ gfshare_ctx_dec_recombine( gfshare_ctx* ctx,
   unsigned char *secret_ptr, *share_ptr;
   unsigned char buffer[nshares][size];
 
-  if( nshares < ctx->threshold || nshares > ctx->maxshares ) {
+  if( nshares < ctx->threshold ) {
     errno = EINVAL;
     return 1;
   }
@@ -166,16 +163,16 @@ gfshare_ctx_dec_recombine( gfshare_ctx* ctx,
   for( i = 0; i < ctx->threshold; ++i ) {
     /* Compute L(i) as per Lagrange Interpolation */
     unsigned Li_top = 0, Li_bottom = 0;
-    unsigned tops[ctx->maxshares];
+    unsigned tops[nshares];
     for( j = ctx->threshold; j < nshares; ++j )
       tops[j] = 0;
     
     for( j = 0; j < ctx->threshold; ++j ) {
       if( i == j ) continue;
-      Li_top += logs[0 ^ coords[j]];
+      Li_top += logs[coords[j]];
       for( k = ctx->threshold; k < nshares; ++k )
         tops[k] += logs[coords[k] ^ coords[j]];
-      Li_bottom += logs[(coords[i]) ^ (coords[j])];
+      Li_bottom += logs[coords[i] ^ coords[j]];
     }
     Li_bottom %= 0xff;
     Li_top += 0xff - Li_bottom;
