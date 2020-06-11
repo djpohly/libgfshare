@@ -38,7 +38,6 @@
 struct _gfshare_ctx {
   unsigned int maxshares;
   unsigned int threshold;
-  unsigned int maxsize;
 };
 
 static void
@@ -59,13 +58,12 @@ gfshare_rand_func_t gfshare_fill_rand = _gfshare_fill_rand_using_random;
 
 gfshare_ctx *
 gfshare_ctx_init( unsigned int maxshares,
-                  unsigned char threshold,
-                  unsigned int maxsize )
+                  unsigned char threshold )
 {
   gfshare_ctx *ctx;
 
   /* Size must be nonzero, and 1 <= threshold <= maxshares */
-  if( maxsize < 1 || threshold < 1 || threshold > maxshares ) {
+  if( threshold < 1 || threshold > maxshares ) {
     errno = EINVAL;
     return NULL;
   }
@@ -76,7 +74,6 @@ gfshare_ctx_init( unsigned int maxshares,
   
   ctx->maxshares = maxshares;
   ctx->threshold = threshold;
-  ctx->maxsize = maxsize;
   
   return ctx;
 }

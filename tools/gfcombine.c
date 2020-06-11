@@ -133,7 +133,7 @@ do_gfcombine( char *outputfilename, char **inputfilenames, int filecount )
     }
   }
   
-  G = gfshare_ctx_init( filecount, filecount, BUFFER_SIZE );
+  G = gfshare_ctx_init( filecount, filecount );
   
   while( !feof(inputfiles[0]) ) {
     unsigned int bytes_read = fread( buffer, 1, BUFFER_SIZE, inputfiles[0] );
