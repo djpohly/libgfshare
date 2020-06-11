@@ -120,8 +120,8 @@ do_gfsplit( unsigned int sharecount,
     outputfilenames[i] = strdup(outputfilebuffer);
   }
   /* All open, all ready and raring to go... */
-  G = gfshare_ctx_init_enc( sharecount, threshold,
-                            MIN(BUFFER_SIZE, getlen( inputfile )) );
+  G = gfshare_ctx_init( sharecount, threshold,
+                        MIN(BUFFER_SIZE, getlen( inputfile )) );
   if( !G ) {
     perror("gfshare_ctx_init_enc");
     return 1;

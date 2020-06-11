@@ -59,10 +59,10 @@ gfshare_rand_func_t gfshare_fill_rand = _gfshare_fill_rand_using_random;
 
 /* ------------------------------------------------------[ Preparation ]---- */
 
-static gfshare_ctx *
-_gfshare_ctx_init_core( unsigned int sharecount,
-                        unsigned char threshold,
-                        unsigned int maxsize )
+gfshare_ctx *
+gfshare_ctx_init( unsigned int sharecount,
+                  unsigned char threshold,
+                  unsigned int maxsize )
 {
   gfshare_ctx *ctx;
 
@@ -99,24 +99,6 @@ _gfshare_ctx_init_core( unsigned int sharecount,
   }
   
   return ctx;
-}
-
-/* Initialise a gfshare context for producing shares */
-gfshare_ctx *
-gfshare_ctx_init_enc( unsigned int sharecount,
-                      unsigned char threshold,
-                      unsigned int maxsize )
-{
-  return _gfshare_ctx_init_core( sharecount, threshold, maxsize );
-}
-
-/* Initialise a gfshare context for recombining shares */
-gfshare_ctx*
-gfshare_ctx_init_dec( unsigned int sharecount,
-                      unsigned int threshold,
-                      unsigned int maxsize )
-{
-  return _gfshare_ctx_init_core( sharecount, threshold, maxsize );
 }
 
 /* Free a share context's memory. */
