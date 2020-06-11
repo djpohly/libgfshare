@@ -185,6 +185,7 @@ int gfshare_ctx_enc_split(gfshare_ctx* ctx,
 /* ----------------------------------------------------[ Recombination ]---- */
 
 /* Extract the secret by interpolation of the provided shares.
+ * coords must not contain any elements which are 0
  * secretbuf must be allocated and at least 'size' bytes long
  */
 int
@@ -203,14 +204,18 @@ gfshare_ctx_dec_recombine( gfshare_ctx* ctx,
     return 1;
   }
 
-  for( i = 0; i < nshares; ++i )
+  for( i = 0; i < nshares; ++i ) {
+    if( coords[i] == 0 ) {
+      errno = EINVAL;
+      return 1;
+    }
     memcpy( ctx->buffer + (i * ctx->maxsize), pshares[i], size );
+  }
 
   /* Find indices at which we hit threshold and nshares parameter, accounting
    * for empty shares.  If not enough shares are provided, it is an error. */
   for( i = ki = 0; i < ctx->threshold && ki < ctx->maxshares; ++ki )
-    if( coords[ki] != 0 )
-      i++;
+    i++;
   if( i < ctx->threshold ) {
     errno = EINVAL;
     return 1;
@@ -218,8 +223,7 @@ gfshare_ctx_dec_recombine( gfshare_ctx* ctx,
 
   /* At this point, i == ctx->threshold */
   for( li = ki; i < nshares && li < ctx->maxshares; ++li )
-    if( coords[li] != 0 )
-      i++;
+    i++;
   if( i < nshares ) {
     errno = EINVAL;
     return 1;
@@ -234,11 +238,8 @@ gfshare_ctx_dec_recombine( gfshare_ctx* ctx,
     for( j = ki; j < li; ++j )
       tops[j] = 0;
     
-    if( coords[i] == 0 ) continue; /* this share is not provided. */
-    
     for( j = 0; j < ki; ++j ) {
       if( i == j ) continue;
-      if( coords[j] == 0 ) continue; /* skip empty share */
       Li_top += logs[0 ^ coords[j]];
       for( k = ki; k < li; ++k )
         tops[k] += logs[coords[k] ^ coords[j]];
