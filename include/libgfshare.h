@@ -55,20 +55,16 @@ void gfshare_ctx_free(gfshare_ctx* /* ctx */);
 
 /* --------------------------------------------------------[ Splitting ]---- */
 
-/* Provide a secret to the encoder. (this re-scrambles the coefficients) */
-void gfshare_ctx_enc_setsecret(gfshare_ctx* /* ctx */,
-                               unsigned int /* size */,
-                               const unsigned char* /* secret */);
-
-/* Extract several shares from the context.
+/* Extract several shares from the provided secret.
  * Each 'pshares[i]' must be preallocated and at least 'size' bytes long.
  * 'coords' is an array of the coordinates of the shares you want.
  */
-int gfshare_ctx_enc_getshares(const gfshare_ctx* /* ctx */,
-                              unsigned int /* nshares */,
-                              unsigned char* /* coords */,
-                              unsigned int /* size */,
-                              unsigned char** /* pshares */);
+int gfshare_ctx_enc_split(gfshare_ctx* /* ctx */,
+                          unsigned int /* size */,
+                          unsigned char* /* secret */,
+                          unsigned int /* nshares */,
+                          unsigned char* /* coords */,
+                          unsigned char** /* pshares */);
 
 /* ----------------------------------------------------[ Recombination ]---- */
 

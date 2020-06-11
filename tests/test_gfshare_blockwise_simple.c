@@ -52,8 +52,7 @@ main( int argc, char **argv )
   pshares[0] = share1; coords[0] = '0';
   pshares[1] = share2; coords[1] = '1';
   pshares[2] = share3; coords[2] = '2';
-  gfshare_ctx_enc_setsecret( G, SECRET_LEN, secret );
-  gfshare_ctx_enc_getshares( G, 3, coords, SECRET_LEN, pshares );
+  gfshare_ctx_enc_split( G, SECRET_LEN, secret, 3, coords, pshares );
   gfshare_ctx_free( G );
   /* Prep the decode shape */
   G = gfshare_ctx_init_dec( 3, 2, SECRET_LEN );
