@@ -36,7 +36,7 @@
 #define XFREE free
 
 struct _gfshare_ctx {
-  unsigned int sharecount;
+  unsigned int maxshares;
   unsigned int threshold;
   unsigned int maxsize;
   unsigned char* buffer;
@@ -59,14 +59,14 @@ gfshare_rand_func_t gfshare_fill_rand = _gfshare_fill_rand_using_random;
 /* ------------------------------------------------------[ Preparation ]---- */
 
 gfshare_ctx *
-gfshare_ctx_init( unsigned int sharecount,
+gfshare_ctx_init( unsigned int maxshares,
                   unsigned char threshold,
                   unsigned int maxsize )
 {
   gfshare_ctx *ctx;
 
-  /* Size must be nonzero, and 1 <= threshold <= sharecount */
-  if( maxsize < 1 || threshold < 1 || threshold > sharecount ) {
+  /* Size must be nonzero, and 1 <= threshold <= maxshares */
+  if( maxsize < 1 || threshold < 1 || threshold > maxshares ) {
     errno = EINVAL;
     return NULL;
   }
@@ -75,11 +75,11 @@ gfshare_ctx_init( unsigned int sharecount,
   if( ctx == NULL )
     return NULL; /* errno should still be set from XMALLOC() */
   
-  ctx->sharecount = sharecount;
+  ctx->maxshares = maxshares;
   ctx->threshold = threshold;
   ctx->maxsize = maxsize;
   
-  ctx->buffer = XMALLOC( sharecount * maxsize );
+  ctx->buffer = XMALLOC( maxshares * maxsize );
   
   if( ctx->buffer == NULL ) {
     int saved_errno = errno;
@@ -95,7 +95,7 @@ gfshare_ctx_init( unsigned int sharecount,
 void 
 gfshare_ctx_free( gfshare_ctx* ctx )
 {
-  gfshare_fill_rand( ctx->buffer, ctx->sharecount * ctx->maxsize );
+  gfshare_fill_rand( ctx->buffer, ctx->maxshares * ctx->maxsize );
   XFREE( ctx->buffer );
   gfshare_fill_rand( (unsigned char*)ctx, sizeof(struct _gfshare_ctx) );
   XFREE( ctx );
@@ -198,7 +198,7 @@ gfshare_ctx_dec_recombine( gfshare_ctx* ctx,
   unsigned int i, j, k, ki, li;
   unsigned char *secret_ptr, *share_ptr;
 
-  if( nshares < ctx->threshold || nshares > ctx->sharecount ) {
+  if( nshares < ctx->threshold || nshares > ctx->maxshares ) {
     errno = EINVAL;
     return 1;
   }
@@ -208,7 +208,7 @@ gfshare_ctx_dec_recombine( gfshare_ctx* ctx,
 
   /* Find indices at which we hit threshold and nshares parameter, accounting
    * for empty shares.  If not enough shares are provided, it is an error. */
-  for( i = ki = 0; i < ctx->threshold && ki < ctx->sharecount; ++ki )
+  for( i = ki = 0; i < ctx->threshold && ki < ctx->maxshares; ++ki )
     if( coords[ki] != 0 )
       i++;
   if( i < ctx->threshold ) {
@@ -217,7 +217,7 @@ gfshare_ctx_dec_recombine( gfshare_ctx* ctx,
   }
 
   /* At this point, i == ctx->threshold */
-  for( li = ki; i < nshares && li < ctx->sharecount; ++li )
+  for( li = ki; i < nshares && li < ctx->maxshares; ++li )
     if( coords[li] != 0 )
       i++;
   if( i < nshares ) {
@@ -230,7 +230,7 @@ gfshare_ctx_dec_recombine( gfshare_ctx* ctx,
   for( i = 0; i < ki; ++i ) {
     /* Compute L(i) as per Lagrange Interpolation */
     unsigned Li_top = 0, Li_bottom = 0;
-    unsigned tops[ctx->sharecount];
+    unsigned tops[ctx->maxshares];
     for( j = ki; j < li; ++j )
       tops[j] = 0;
     
