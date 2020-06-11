@@ -39,7 +39,7 @@ struct _gfshare_ctx {
   unsigned int sharecount;
   unsigned int threshold;
   unsigned int maxsize;
-  unsigned char* sharenrs;
+  unsigned char* coords;
   unsigned char* buffer;
 };
 
@@ -60,8 +60,7 @@ gfshare_rand_func_t gfshare_fill_rand = _gfshare_fill_rand_using_random;
 /* ------------------------------------------------------[ Preparation ]---- */
 
 static gfshare_ctx *
-_gfshare_ctx_init_core( const unsigned char *sharenrs,
-                        unsigned int sharecount,
+_gfshare_ctx_init_core( unsigned int sharecount,
                         unsigned char threshold,
                         unsigned int maxsize )
 {
@@ -80,21 +79,20 @@ _gfshare_ctx_init_core( const unsigned char *sharenrs,
   ctx->sharecount = sharecount;
   ctx->threshold = threshold;
   ctx->maxsize = maxsize;
-  ctx->sharenrs = XMALLOC( sharecount );
+  ctx->coords = XMALLOC( sharecount );
   
-  if( ctx->sharenrs == NULL ) {
+  if( ctx->coords == NULL ) {
     int saved_errno = errno;
     XFREE( ctx );
     errno = saved_errno;
     return NULL;
   }
   
-  memcpy( ctx->sharenrs, sharenrs, sharecount );
   ctx->buffer = XMALLOC( sharecount * maxsize );
   
   if( ctx->buffer == NULL ) {
     int saved_errno = errno;
-    XFREE( ctx->sharenrs );
+    XFREE( ctx->coords );
     XFREE( ctx );
     errno = saved_errno;
     return NULL;
@@ -105,34 +103,20 @@ _gfshare_ctx_init_core( const unsigned char *sharenrs,
 
 /* Initialise a gfshare context for producing shares */
 gfshare_ctx *
-gfshare_ctx_init_enc( const unsigned char* sharenrs,
-                      unsigned int sharecount,
+gfshare_ctx_init_enc( unsigned int sharecount,
                       unsigned char threshold,
                       unsigned int maxsize )
 {
-  unsigned int i;
-
-  for (i = 0; i < sharecount; i++) {
-    if (sharenrs[i] == 0) {
-      /* can't have x[i] = 0 - that would just be a copy of the secret, in
-       * theory (in fact, due to the way we use exp/log for multiplication and
-       * treat log(0) as 0, it ends up as a copy of x[i] = 1) */
-      errno = EINVAL;
-      return NULL;
-    }
-  }
-
-  return _gfshare_ctx_init_core( sharenrs, sharecount, threshold, maxsize );
+  return _gfshare_ctx_init_core( sharecount, threshold, maxsize );
 }
 
 /* Initialise a gfshare context for recombining shares */
 gfshare_ctx*
-gfshare_ctx_init_dec( const unsigned char* sharenrs,
-                      unsigned int sharecount,
+gfshare_ctx_init_dec( unsigned int sharecount,
                       unsigned int threshold,
                       unsigned int maxsize )
 {
-  return _gfshare_ctx_init_core( sharenrs, sharecount, threshold, maxsize );
+  return _gfshare_ctx_init_core( sharecount, threshold, maxsize );
 }
 
 /* Free a share context's memory. */
@@ -140,8 +124,8 @@ void
 gfshare_ctx_free( gfshare_ctx* ctx )
 {
   gfshare_fill_rand( ctx->buffer, ctx->sharecount * ctx->maxsize );
-  gfshare_fill_rand( ctx->sharenrs, ctx->sharecount );
-  XFREE( ctx->sharenrs );
+  gfshare_fill_rand( ctx->coords, ctx->sharecount );
+  XFREE( ctx->coords );
   XFREE( ctx->buffer );
   gfshare_fill_rand( (unsigned char*)ctx, sizeof(struct _gfshare_ctx) );
   XFREE( ctx );
@@ -196,28 +180,19 @@ gfshare_ctx_enc_getshare( const gfshare_ctx* ctx,
 
 /* ----------------------------------------------------[ Recombination ]---- */
 
-/* Inform a recombination context of a change in share indexes */
-void 
-gfshare_ctx_dec_newshares( gfshare_ctx* ctx,
-                           const unsigned char* sharenrs)
-{
-  memcpy( ctx->sharenrs, sharenrs, ctx->sharecount );
-}
-
-/* Provide a share context with one of the shares.
- * The 'sharenr' is the index into the 'sharenrs' array
+/* Provide a share context with shares.
  */
 int
-gfshare_ctx_dec_giveshare( gfshare_ctx* ctx,
-                           unsigned char sharenr,
-                           unsigned int size,
-                           const unsigned char share[static size] )
+gfshare_ctx_dec_giveshares( gfshare_ctx* ctx,
+                            unsigned int nshares,
+                            unsigned char coords[static nshares],
+                            unsigned int size,
+                            unsigned char* pshares[static nshares] )
 {
-  if( sharenr >= ctx->sharecount ) {
-    errno = EINVAL;
-    return 1;
-  }
-  memcpy( ctx->buffer + (sharenr * ctx->maxsize), share, size );
+  unsigned int sharenr;
+  for( sharenr = 0; sharenr < nshares; ++sharenr )
+    memcpy( ctx->buffer + (sharenr * ctx->maxsize), pshares[sharenr], size );
+  memcpy( ctx->coords, coords, nshares );
   return 0;
 }
 
@@ -241,7 +216,7 @@ gfshare_ctx_dec_extract( const gfshare_ctx* ctx,
   /* Find indices at which we hit threshold and integrity parameter, accounting
    * for empty shares.  If not enough shares are provided, it is an error. */
   for( i = ki = 0; i < ctx->threshold && ki < ctx->sharecount; ++ki )
-    if( ctx->sharenrs[ki] != 0 )
+    if( ctx->coords[ki] != 0 )
       i++;
   if( i < ctx->threshold ) {
     errno = EINVAL;
@@ -250,7 +225,7 @@ gfshare_ctx_dec_extract( const gfshare_ctx* ctx,
 
   /* At this point, i == ctx->threshold */
   for( li = ki; i < integrity && li < ctx->sharecount; ++li )
-    if( ctx->sharenrs[li] != 0 )
+    if( ctx->coords[li] != 0 )
       i++;
   if( i < integrity ) {
     errno = EINVAL;
@@ -266,15 +241,15 @@ gfshare_ctx_dec_extract( const gfshare_ctx* ctx,
     for( j = ki; j < li; ++j )
       tops[j] = 0;
     
-    if( ctx->sharenrs[i] == 0 ) continue; /* this share is not provided. */
+    if( ctx->coords[i] == 0 ) continue; /* this share is not provided. */
     
     for( j = 0; j < ki; ++j ) {
       if( i == j ) continue;
-      if( ctx->sharenrs[j] == 0 ) continue; /* skip empty share */
-      Li_top += logs[0 ^ ctx->sharenrs[j]];
+      if( ctx->coords[j] == 0 ) continue; /* skip empty share */
+      Li_top += logs[0 ^ ctx->coords[j]];
       for( k = ki; k < li; ++k )
-        tops[k] += logs[ctx->sharenrs[k] ^ ctx->sharenrs[j]];
-      Li_bottom += logs[(ctx->sharenrs[i]) ^ (ctx->sharenrs[j])];
+        tops[k] += logs[ctx->coords[k] ^ ctx->coords[j]];
+      Li_bottom += logs[(ctx->coords[i]) ^ (ctx->coords[j])];
     }
     Li_bottom %= 0xff;
     Li_top += 0xff - Li_bottom;

@@ -41,14 +41,12 @@ extern gfshare_rand_func_t gfshare_fill_rand;
 /* ------------------------------------------------------[ Preparation ]---- */
 
 /* Initialise a gfshare context for producing shares */
-gfshare_ctx* gfshare_ctx_init_enc(const unsigned char* /* sharenrs */,
-                                  unsigned int /* sharecount */,
+gfshare_ctx* gfshare_ctx_init_enc(unsigned int /* sharecount */,
                                   unsigned char /* threshold */,
                                   unsigned int /* maxsize */);
 
 /* Initialise a gfshare context for recombining shares */
-gfshare_ctx* gfshare_ctx_init_dec(const unsigned char* /* sharenrs */,
-                                  unsigned int /* sharecount */,
+gfshare_ctx* gfshare_ctx_init_dec(unsigned int /* sharecount */,
                                   unsigned int /* threshold */,
                                   unsigned int /* maxsize */);
 
@@ -73,17 +71,13 @@ int gfshare_ctx_enc_getshare(const gfshare_ctx* /* ctx */,
 
 /* ----------------------------------------------------[ Recombination ]---- */
 
-/* Inform a recombination context of a change in share indexes */
-void gfshare_ctx_dec_newshares(gfshare_ctx* /* ctx */,
-                               const unsigned char* /* sharenrs */);
-
-/* Provide a share context with one of the shares.
- * The 'sharenr' is the index into the 'sharenrs' array
+/* Provide a share context with shares.
  */
-int gfshare_ctx_dec_giveshare(gfshare_ctx* /* ctx */,
-                              unsigned char /* sharenr */,
-                              unsigned int /* size */,
-                              const unsigned char* /* share */);
+int gfshare_ctx_dec_giveshares(gfshare_ctx* /* ctx */,
+                               unsigned int /* nshares */,
+                               unsigned char* /* coords */,
+                               unsigned int /* size */,
+                               unsigned char** /* pshares */);
 
 /* Extract the secret by interpolation of the shares.
  * secretbuf must be allocated and at least 'size' bytes long

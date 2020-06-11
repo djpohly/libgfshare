@@ -96,7 +96,8 @@ do_gfcombine( char *outputfilename, char **inputfilenames, int filecount )
   FILE **inputfiles = malloc( sizeof(FILE*) * filecount );
   unsigned char* sharenrs = malloc( filecount );
   int i;
-  unsigned char *buffer = malloc( BUFFER_SIZE );
+  unsigned char *buffer = malloc( BUFFER_SIZE * filecount );
+  unsigned char **pshares = malloc( sizeof(unsigned char *) * filecount );
   gfshare_ctx *G;
   unsigned int len1 = 0;
   
@@ -122,6 +123,7 @@ do_gfcombine( char *outputfilename, char **inputfilenames, int filecount )
     }
     sharenrs[i] = strtoul( inputfilenames[i] + strlen(inputfilenames[i]) - 3, 
                            NULL, 10 );
+    pshares[i] = buffer + i * BUFFER_SIZE;
     if( i == 0 ) len1 = getlen(inputfiles[0]);
     else {
       if( len1 != getlen(inputfiles[1]) ) {
@@ -131,22 +133,21 @@ do_gfcombine( char *outputfilename, char **inputfilenames, int filecount )
     }
   }
   
-  G = gfshare_ctx_init_dec( sharenrs, filecount, filecount, BUFFER_SIZE );
+  G = gfshare_ctx_init_dec( filecount, filecount, BUFFER_SIZE );
   
   while( !feof(inputfiles[0]) ) {
     unsigned int bytes_read = fread( buffer, 1, BUFFER_SIZE, inputfiles[0] );
     unsigned int bytes_written;
-    gfshare_ctx_dec_giveshare( G, 0, bytes_read, buffer );
     for( i = 1; i < filecount; ++i ) {
-      unsigned int bytes_read_2 = fread( buffer, 1, BUFFER_SIZE, 
+      unsigned int bytes_read_2 = fread( pshares[i], 1, BUFFER_SIZE,
                                          inputfiles[i] );
       if( bytes_read != bytes_read_2 ) {
         fprintf( stderr, "Mismatch during file read.\n");
         gfshare_ctx_free( G );
         return 1;
       }
-      gfshare_ctx_dec_giveshare( G, i, bytes_read, buffer );
     }
+    gfshare_ctx_dec_giveshares( G, filecount, sharenrs, bytes_read, pshares);
     gfshare_ctx_dec_extract( G, bytes_read, buffer, filecount );
     bytes_written = fwrite( buffer, 1, bytes_read, outfile );
     if( bytes_written != bytes_read ) {
